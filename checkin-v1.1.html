@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkin Single File Skeleton</title>
+  <style>
+    :root {
+      --color-primary: #2f6ea7;
+      --color-primary-hover: #3b78af;
+      --color-primary-soft: #eef4fb;
+      --color-danger: #dc3545;
+      --color-danger-hover: #c82333;
+      --color-success: #1f9d55;
+      --color-warning: #b7791f;
+      --bg-page: #f5f6f8;
+      --bg-surface: #ffffff;
+      --bg-surface-soft: #f8f9fb;
+      --bg-surface-muted: #edf2f7;
+      --bg-overlay: rgba(15, 23, 42, 0.45);
+      --bg-input: #ffffff;
+      --text-primary: #1f2937;
+      --text-secondary: #4b5563;
+      --text-tertiary: rgba(75, 85, 99, 0.72);
+      --border-default: #dde3ea;
+      --border-strong: #c7d1dc;
+      --shadow-soft: 0 2px 8px rgba(15, 23, 42, 0.05);
+      --shadow-panel: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --shadow-modal: 0 24px 48px rgba(15, 23, 42, 0.22);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 18px;
+      --header-height: 56px;
+      --transition-fast: 140ms ease;
+    }
+    body.theme-dark {
+      --color-primary: #7aa9d6;
+      --color-primary-hover: #8fb6de;
+      --color-primary-soft: rgba(122, 169, 214, 0.15);
+      --color-danger: #f56565;
+      --color-danger-hover: #e53e3e;
+      --color-success: #38a169;
+      --color-warning: #d69e2e;
+      --bg-page: #171b21;
+      --bg-surface: #1d232b;
+      --bg-surface-soft: #202730;
+      --bg-surface-muted: #252d37;
+      --bg-overlay: rgba(2, 6, 23, 0.62);
+      --bg-input: #1a2028;
+      --text-primary: #e6ebf2;
+      --text-secondary: #c2ccd8;
+      --text-tertiary: rgba(194, 204, 216, 0.72);
+      --border-default: #303844;
+      --border-strong: #43505f;
+      --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.22);
+      --shadow-panel: 0 14px 30px rgba(0, 0, 0, 0.28);
+      --shadow-modal: 0 32px 60px rgba(0, 0, 0, 0.42);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background: var(--bg-page);
+      color: var(--text-primary);
+      font: 14px/1.5 "Segoe UI", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+      overflow: hidden;
+    }
+    button, input, textarea, select { font: inherit; color: inherit; }
+    button { border: 1px solid transparent; background: transparent; cursor: pointer; }
+    textarea { resize: none; }
+    .u-hidden { display: none !important; }
+    .u-text-muted { color: var(--text-tertiary); }
+    .u-flex-grow { flex: 1 1 auto; }
+    .u-row { display: flex; align-items: center; gap: 8px; }
+    .c-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 36px;
+      padding: 0 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-default);
+      background: var(--bg-surface); color: var(--text-primary); transition: background var(--transition-fast), border-color var(--transition-fast);
+      white-space: nowrap;
+    }
+    .c-btn:hover { background: var(--bg-surface-soft); }
+    .c-btn--primary { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+    .c-btn--primary:hover { background: var(--color-primary-hover); border-color: var(--color-primary-hover); }
+    .c-btn--danger { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+    .c-btn--danger:hover { background: var(--color-danger-hover); border-color: var(--color-danger-hover); }
+    .c-btn--ghost { background: transparent; }
+    .c-badge { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-primary); font-size: 12px; font-weight: 600; }
+    .c-input, .c-textarea, .c-select {
+      width: 100%; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-input);
+      color: var(--text-primary); padding: 10px 12px; outline: none;
+    }
+    .c-input:focus, .c-textarea:focus, .c-select:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47, 110, 167, 0.18); }
+    .c-field { display: flex; flex-direction: column; gap: 8px; }
+    .c-field__label { font-weight: 600; }
+    .c-panel { background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-lg); box-shadow: var(--shadow-soft); }
+    .c-list { display: flex; flex-direction: column; gap: 8px; }
+    .c-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border-default); border-radius: var(--radius-md); background: var(--bg-surface); }
+    .c-list-item:hover { background: var(--bg-surface-soft); }
+    .app { height: 100%; display: grid; grid-template-rows: var(--header-height) 1fr; }
+    .l-header {
+      display: flex; align-items: center; gap: 12px; padding: 0 16px; background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-default); box-shadow: var(--shadow-soft); z-index: 10;
+    }
+    .l-header__brand { font-size: 18px; font-weight: 700; }
+    .l-header__nav { display: flex; align-items: center; gap: 6px; }
+    .l-header__nav-btn { min-height: 36px; padding: 0 14px; border-radius: var(--radius-sm); color: var(--text-secondary); }
+    .l-header__nav-btn:hover { background: var(--bg-surface-soft); }
+    .l-header__nav-btn.is-active { background: var(--color-primary-soft); color: var(--color-primary); font-weight: 700; }
+    .l-header__tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .l-main { min-height: 0; display: block; }
+    .l-panel { height: 100%; display: none; padding: 16px; }
+    .l-panel.is-active { display: block; }
+    .l-split { height: 100%; min-height: 0; display: grid; grid-template-columns: 280px 1fr; gap: 16px; }
+    .l-sidebar { min-width: 0; background: var(--bg-surface-soft); border: 1px solid var(--border-default); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; }
+    .l-sidebar__header, .l-content__header { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--border-default); background: var(--bg-surface-soft); }
+    .l-sidebar__body, .l-content__body { min-height: 0; overflow: auto; padding: 12px; }
+    .l-content { min-width: 0; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-lg); display: flex; flex-direction: column; overflow: hidden; }
+    .f-home { height: 100%; display: grid; place-items: center; }
+    .f-home__card { width: min(1040px, 100%); padding: 28px; display: grid; gap: 20px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 22px; box-shadow: var(--shadow-panel); }
+    .f-home__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .f-home__entry { min-height: 124px; padding: 18px; border-radius: 18px; border: 1px solid var(--border-default); background: var(--bg-surface-soft); display: flex; flex-direction: column; justify-content: space-between; text-align: left; }
+    .f-home__entry:hover { border-color: var(--color-primary); }
+    .f-chat { height: 100%; }
+    .f-chat__session-item { display: grid; grid-template-columns: 12px 1fr auto; gap: 10px; align-items: center; padding: 12px; border-radius: var(--radius-md); cursor: pointer; border: 1px solid transparent; }
+    .f-chat__session-item:hover { background: var(--bg-surface-soft); }
+    .f-chat__session-item.is-active { background: var(--color-primary-soft); border-color: rgba(47, 110, 167, 0.32); }
+    .f-chat__session-meta { display: flex; flex-direction: column; min-width: 0; }
+    .f-chat__session-name { font-weight: 700; }
+    .f-chat__session-last { color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .f-chat__announcement { margin: 12px; padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--bg-surface-soft); display: flex; align-items: flex-start; gap: 10px; }
+    .f-chat__messages { flex: 1 1 auto; min-height: 0; overflow: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 12px; background: linear-gradient(to bottom, var(--bg-surface), var(--bg-surface-soft)); }
+    .f-chat__message { display: flex; flex-direction: column; gap: 6px; max-width: min(760px, 100%); }
+    .f-chat__message.is-self { margin-left: auto; align-items: flex-end; }
+    .f-chat__message-meta { font-size: 12px; color: var(--text-tertiary); }
+    .f-chat__bubble { padding: 12px 14px; border-radius: 14px; background: var(--bg-surface); border: 1px solid var(--border-default); box-shadow: var(--shadow-soft); white-space: pre-wrap; word-break: break-word; }
+    .f-chat__message.is-self .f-chat__bubble { background: var(--color-primary-soft); border-color: rgba(47, 110, 167, 0.32); }
+    .f-chat__vote-card { display: flex; flex-direction: column; gap: 10px; min-width: 260px; }
+    .f-chat__vote-header { display: flex; align-items: center; gap: 8px; }
+    .f-chat__vote-options { display: flex; flex-direction: column; gap: 8px; }
+    .f-chat__vote-option { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid var(--border-default); border-radius: var(--radius-sm); background: var(--bg-surface-soft); }
+    .f-chat__vote-option:hover:not(:disabled) { border-color: var(--color-primary); }
+    .f-chat__vote-option.is-selected { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary); }
+    .f-chat__composer-wrap { border-top: 1px solid var(--border-default); background: var(--bg-surface); padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .f-chat__toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .f-chat__composer { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+    .f-chat__candidate-panel { display: flex; gap: 8px; overflow: auto; padding-bottom: 2px; }
+    .f-chat__candidate-item { padding: 6px 10px; border-radius: 999px; background: var(--bg-surface-soft); border: 1px solid var(--border-default); white-space: nowrap; }
+    .f-chat__candidate-item:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .f-drive__path { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .f-drive__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+    .f-drive__item { padding: 14px; min-height: 100px; display: flex; flex-direction: column; gap: 8px; }
+    .f-drive__item-name { font-weight: 700; }
+    .f-plugin__item, .f-task__item, .f-admin__card { padding: 14px; }
+    .f-plugin__row, .f-admin__row { display: flex; align-items: center; gap: 10px; }
+    .f-plugin__meta, .f-admin__meta { display: flex; gap: 8px; flex-wrap: wrap; color: var(--text-tertiary); font-size: 12px; }
+    .f-task__progress { width: 100%; height: 8px; border-radius: 999px; background: var(--bg-surface-muted); overflow: hidden; }
+    .f-task__progress-bar { height: 100%; background: var(--color-primary); }
+    .f-floatball { position: fixed; right: 24px; bottom: 24px; width: 58px; height: 58px; border-radius: 50%; border: none; background: var(--color-primary); color: #fff; box-shadow: var(--shadow-panel); z-index: 40; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; }
+    .c-modal-root { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: var(--bg-overlay); z-index: 60; padding: 20px; }
+    .c-modal-root.is-open { display: flex; }
+    .c-modal { width: min(760px, 100%); max-height: calc(100vh - 40px); overflow: hidden; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: var(--radius-xl); box-shadow: var(--shadow-modal); display: flex; flex-direction: column; outline: none; }
+    .c-modal__header, .c-modal__footer { display: flex; align-items: center; gap: 10px; padding: 16px 18px; background: var(--bg-surface-soft); }
+    .c-modal__header { border-bottom: 1px solid var(--border-default); }
+    .c-modal__footer { border-top: 1px solid var(--border-default); justify-content: flex-end; }
+    .c-modal__body { padding: 18px; overflow: auto; }
+    .c-modal__title { font-size: 18px; font-weight: 700; margin: 0; }
+    .c-toast-stack { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 80; }
+    .c-toast { min-width: 280px; max-width: 360px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--bg-surface); border: 1px solid var(--border-default); box-shadow: var(--shadow-panel); }
+    .c-toast__title { font-weight: 700; margin-bottom: 4px; }
+    @media (max-width: 980px) { .f-home__grid { grid-template-columns: 1fr; } .l-split { grid-template-columns: 1fr; } .l-sidebar { max-height: 280px; } }
+  </style>
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="l-header">
+      <div class="l-header__brand">Checkin</div>
+      <nav class="l-header__nav" data-role="panel-nav"></nav>
+      <div class="l-header__tools">
+        <span class="c-badge" id="connectionBadge">未连接</span>
+        <span class="c-badge" id="currentUserBadge">匿名</span>
+        <button class="c-btn c-btn--ghost" data-action="open-plugin-manager">插件</button>
+        <button class="c-btn c-btn--ghost" data-action="open-login">登录</button>
+        <button class="c-btn c-btn--ghost" data-action="toggle-theme">切换主题</button>
+      </div>
+    </header>
+
+    <main class="l-main">
+      <section class="l-panel is-active" data-panel="home"></section>
+      <section class="l-panel" data-panel="chat"></section>
+      <section class="l-panel" data-panel="drive"></section>
+      <section class="l-panel" data-panel="admin"></section>
+    </main>
+  </div>
+
+  <div class="c-toast-stack" id="toastStack"></div>
+  <div class="c-modal-root" id="modalRoot" aria-hidden="true"></div>
+  <button class="f-floatball" id="taskBall" title="后台任务">≡</button>
+
+  <script>
+    ;(() => {
+      const APP_CONFIG = {
+        apiBase: window.CHECKIN_API_BASE || 'http://127.0.0.1:8787'
+      };
+
+      const dom = {
+        qs(root, selector) { if (typeof root === 'string') return document.querySelector(root); return root.querySelector(selector); },
+        qsa(root, selector) { if (typeof root === 'string') return [...document.querySelectorAll(root)]; return [...root.querySelectorAll(selector)]; },
+        on(el, event, handler, options) { el.addEventListener(event, handler, options); return () => el.removeEventListener(event, handler, options); },
+        create(tag, className, text) { const el = document.createElement(tag); if (className) el.className = className; if (text != null) el.textContent = text; return el; }
+      };
+
+      function escapeHtml(str = '') {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function uid(prefix = 'id') { return prefix + '_' + Math.random().toString(36).slice(2, 8); }
+      function cloneState(value) { return typeof structuredClone === 'function' ? structuredClone(value) : JSON.parse(JSON.stringify(value)); }
+
+      const storage = {
+        get(key, fallback) { try { const value = localStorage.getItem(key); return value == null ? fallback : JSON.parse(value); } catch { return fallback; } },
+        set(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+      };
+
+      const theme = {
+        key: 'checkin-single-theme',
+        init() { const saved = storage.get(this.key, 'light'); document.body.classList.toggle('theme-dark', saved === 'dark'); },
+        toggle() { const next = document.body.classList.contains('theme-dark') ? 'light' : 'dark'; document.body.classList.toggle('theme-dark', next === 'dark'); storage.set(this.key, next); toast.show('主题已切换', next === 'dark' ? '当前为暗色主题' : '当前为亮色主题'); }
+      };
+
+      const toast = {
+        root: document.getElementById('toastStack'),
+        show(title, content, delay = 2200) {
+          const el = dom.create('div', 'c-toast');
+          el.innerHTML = '<div class="c-toast__title">' + escapeHtml(title) + '</div><div>' + escapeHtml(content || '') + '</div>';
+          this.root.appendChild(el);
+          setTimeout(() => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-6px)';
+            el.style.transition = 'all .18s ease';
+            setTimeout(() => el.remove(), 180);
+          }, delay);
+        }
+      };
+
+      class ModalBase {
+        constructor({ title, width = 760, content, actions = [] }) {
+          this.title = title; this.width = width; this.content = content; this.actions = actions; this.root = document.getElementById('modalRoot');
+          this.lastActiveElement = null; this.modal = null;
+          this.handleKeydown = this.handleKeydown.bind(this); this.handleBackdrop = this.handleBackdrop.bind(this);
+        }
+        open() {
+          this.root.innerHTML = '';
+          this.lastActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+          const modal = dom.create('div', 'c-modal');
+          modal.style.width = 'min(' + this.width + 'px, 100%)';
+          modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('tabindex', '-1');
+          const header = dom.create('div', 'c-modal__header');
+          const title = dom.create('h3', 'c-modal__title', this.title);
+          const spacer = dom.create('span', 'u-flex-grow');
+          const closeBtn = dom.create('button', 'c-btn c-btn--ghost', '关闭');
+          closeBtn.addEventListener('click', () => this.close());
+          header.appendChild(title); header.appendChild(spacer); header.appendChild(closeBtn);
+          const body = dom.create('div', 'c-modal__body');
+          if (typeof this.content === 'string') body.textContent = this.content;
+          else if (this.content instanceof Node) body.appendChild(this.content);
+          else if (typeof this.content === 'function') {
+            const result = this.content(body, this);
+            if (result instanceof Node) body.appendChild(result);
+          }
+          const footer = dom.create('div', 'c-modal__footer');
+          this.actions.forEach((action) => {
+            const btn = dom.create('button', ('c-btn ' + (action.variant || '')).trim(), action.label);
+            btn.addEventListener('click', () => action.onClick && action.onClick(this));
+            footer.appendChild(btn);
+          });
+          modal.appendChild(header); modal.appendChild(body); modal.appendChild(footer);
+          this.root.appendChild(modal); this.root.classList.add('is-open'); this.root.setAttribute('aria-hidden', 'false');
+          this.root.addEventListener('click', this.handleBackdrop); document.addEventListener('keydown', this.handleKeydown);
+          this.modal = modal; modal.focus();
+        }
+        handleBackdrop(event) { if (event.target === this.root) this.close(); }
+        handleKeydown(event) { if (event.key === 'Escape') this.close(); }
+        close() {
+          this.root.classList.remove('is-open'); this.root.setAttribute('aria-hidden', 'true'); this.root.removeEventListener('click', this.handleBackdrop); document.removeEventListener('keydown', this.handleKeydown); this.root.innerHTML = '';
+          if (this.lastActiveElement && document.contains(this.lastActiveElement)) this.lastActiveElement.focus();
+        }
+      }
+
+      function createStore(initialState) {
+        const listeners = {};
+        const state = initialState;
+        let transactionSeed = 0;
+        return {
+          getState() { return state; },
+          update(channel, updater, payload) {
+            if (typeof updater === 'function') updater(state);
+            const channels = Array.isArray(channel) ? channel : [channel];
+            const txId = 'tx_' + String(transactionSeed += 1);
+            channels.forEach((name) => this.emit(name, Object.assign({}, payload || {}, { channel: name, txId }))); 
+          },
+          emit(channel, payload) {
+            (listeners[channel] || []).slice().forEach((fn) => fn(payload, state));
+            (listeners['*'] || []).slice().forEach((fn) => fn({ channel, payload }, state));
+          },
+          subscribe(channel, handler) {
+            if (!listeners[channel]) listeners[channel] = [];
+            listeners[channel].push(handler);
+            return () => { listeners[channel] = (listeners[channel] || []).filter((item) => item !== handler); };
+          }
+        };
+      }
+
+      class PanelRouter {
+        constructor({ navRoot, panelRoots }) { this.navRoot = navRoot; this.panelRoots = panelRoots; this.current = 'home'; this.items = [{ id: 'home', label: '首页' }, { id: 'chat', label: '聊天' }, { id: 'drive', label: '网盘' }, { id: 'admin', label: '后台' }]; }
+        init() {
+          this.navRoot.innerHTML = this.items.map((item) => '<button class="l-header__nav-btn ' + (item.id === this.current ? 'is-active' : '') + '" data-action="switch-panel" data-panel-id="' + item.id + '">' + escapeHtml(item.label) + '</button>').join('');
+          this.navRoot.addEventListener('click', (event) => {
+            const btn = event.target.closest('[data-action="switch-panel"]');
+            if (!btn) return;
+            this.switchTo(btn.dataset.panelId);
+          });
+        }
+        switchTo(panelId) {
+          this.current = panelId;
+          this.panelRoots.forEach((panel) => panel.classList.toggle('is-active', panel.dataset.panel === panelId));
+          dom.qsa(this.navRoot, '[data-action="switch-panel"]').forEach((btn) => btn.classList.toggle('is-active', btn.dataset.panelId === panelId));
+        }
+      }
+
+      class FeatureBase {
+        constructor(root, store, services) { this.root = root || null; this.store = store || null; this.services = services || null; this.unsubscribe = []; this._bound = false; }
+        init() { if (this._bound) return this; this.render(); this.bindEvents(); this._bound = true; return this; }
+        render() {}
+        bindEvents() {}
+        destroy() { while (this.unsubscribe.length) { const dispose = this.unsubscribe.pop(); if (typeof dispose === 'function') dispose(); } this._bound = false; }
+      }
+
+      class ApiClient {
+        constructor(baseUrl) { this.baseUrl = baseUrl.replace(/\/$/, ''); }
+        async request(path, options = {}) {
+          const res = await fetch(this.baseUrl + path, Object.assign({ credentials: 'include' }, options));
+          const text = await res.text();
+          let data = null;
+          try { data = text ? JSON.parse(text) : null; } catch { data = { ok: false, message: text || 'Invalid JSON' }; }
+          if (!res.ok) {
+            const message = data && data.message ? data.message : ('HTTP ' + res.status);
+            throw new Error(message);
+          }
+          return data;
+        }
+        get(path) { return this.request(path); }
+        post(path, body) { return this.request(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) }); }
+        del(path) { return this.request(path, { method: 'DELETE' }); }
+      }
+
+      class AuthService {
+        constructor(api) { this.api = api; }
+        me() { return this.api.get('/api/auth/me'); }
+        login(payload) { return this.api.post('/api/auth/login', payload); }
+        logout() { return this.api.post('/api/auth/logout', {}); }
+        register(payload) { return this.api.post('/api/register', payload); }
+      }
+
+      class ChatService {
+        constructor(api) { this.api = api; }
+        contacts() { return this.api.get('/chat/api/contacts'); }
+        load(sessionId) { return this.api.get('/chat/api/load?sessionId=' + encodeURIComponent(sessionId)); }
+        loadHistory(sessionId) { return this.api.get('/chat/api/load_history?sessionId=' + encodeURIComponent(sessionId)); }
+        sendText(payload) { return this.api.post('/chat/api/send', payload); }
+        sendVote(payload) { return this.api.post('/chat/api/vote', payload); }
+        getAnnouncement(sessionId) { return this.api.get('/chat/api/get_announcement?sessionId=' + encodeURIComponent(sessionId)); }
+        setAnnouncement(payload) { return this.api.post('/chat/api/set_announcement', payload); }
+      }
+
+      class DriveService {
+        constructor(api) { this.api = api; }
+        list(bucket, path) { return this.api.get('/drive/api/list?bucket=' + encodeURIComponent(bucket || 'team') + '&path=' + encodeURIComponent(path || '/')); }
+        createFolder(payload) { return this.api.post('/drive/api/new', payload); }
+        uploadInit(payload) { return this.api.post('/drive/api/upload', payload); }
+      }
+
+      class PluginServiceApi {
+        constructor(api) { this.api = api; }
+        list() { return this.api.get('/api/plugins'); }
+        detail(id) { return this.api.get('/api/plugins/' + encodeURIComponent(id)); }
+        activate(id) { return this.api.post('/api/plugins/' + encodeURIComponent(id) + '/activate', {}); }
+        deactivate(id) { return this.api.post('/api/plugins/' + encodeURIComponent(id) + '/deactivate', {}); }
+        install(id) { return this.api.post('/api/plugins/' + encodeURIComponent(id) + '/install', {}); }
+        uninstall(id) { return this.api.post('/api/plugins/' + encodeURIComponent(id) + '/uninstall', {}); }
+      }
+
+      class AdminService {
+        constructor(api) { this.api = api; }
+        status() { return this.api.get('/admin/api/service/status'); }
+        getSettings() { return this.api.get('/admin/api/settings/get'); }
+        updateSettings(payload) { return this.api.post('/admin/api/settings/update', payload); }
+        backup() { return this.api.get('/admin/api/service/backup'); }
+      }
+
+      class TaskService {
+        constructor(api) { this.api = api; }
+        list() { return this.api.get('/api/tasks'); }
+      }
+
+      function createSeed() {
+        return {
+          auth: { user: null, ready: false },
+          home: {},
+          chat: { sessions: [], activeSessionId: '', draftBySessionId: {}, messagesBySessionId: {}, announcementsBySessionId: {} },
+          drive: { bucket: 'team', path: '/', items: [] },
+          admin: { status: null, settings: {} },
+          plugins: { items: [] },
+          tasks: []
+        };
+      }
+
+      function renderHome(root, router) {
+        root.innerHTML = `
+          <div class="f-home">
+            <div class="f-home__card">
+              <div>
+                <h1 style="margin:0 0 8px;">Checkin 单文件前端骨架</h1>
+                <p style="margin:0;color:var(--text-secondary);">保留你 v4.3 的 PanelRouter / FeatureBase / ModalBase / store 方向，直接对接单文件 Workers 后端。</p>
+              </div>
+              <div class="f-home__grid">
+                <button class="f-home__entry" data-jump="chat"><h3 style="margin:0;">聊天</h3><p style="margin:0;color:var(--text-secondary);">会话、消息、公告、投票、候选词、写字板入口。</p></button>
+                <button class="f-home__entry" data-jump="drive"><h3 style="margin:0;">网盘</h3><p style="margin:0;color:var(--text-secondary);">桶切换、路径栏、动作区、传输区、文件列表。</p></button>
+                <button class="f-home__entry" data-jump="admin"><h3 style="margin:0;">后台</h3><p style="margin:0;color:var(--text-secondary);">服务状态、系统设置、备份预览。</p></button>
+              </div>
+            </div>
+          </div>
+        `;
+        root.addEventListener('click', (event) => {
+          const entry = event.target.closest('[data-jump]');
+          if (!entry) return;
+          router.switchTo(entry.dataset.jump);
+        });
+      }
+
+      class ChatSessionList {
+        constructor(feature) { this.feature = feature; }
+        render() {
+          const activeSessionId = this.feature.getActiveSessionId();
+          const sessions = this.feature.getSessions();
+          this.feature.refs.sessionCount.textContent = String(sessions.length);
+          this.feature.refs.sessionList.innerHTML = sessions.map((session) => `
+            <div class="f-chat__session-item ${session.id === activeSessionId ? 'is-active' : ''}" data-action="switch-session" data-session-id="${session.id}">
+              <span class="c-badge">${session.online ? '在线' : '离线'}</span>
+              <div class="f-chat__session-meta">
+                <span class="f-chat__session-name">${escapeHtml(session.name)}</span>
+                <span class="f-chat__session-last">${escapeHtml(session.lastMessage || '')}</span>
+              </div>
+              <span class="u-text-muted">›</span>
+            </div>
+          `).join('');
+        }
+      }
+
+      class ChatMessageRenderer {
+        constructor(feature) { this.feature = feature; }
+        render() {
+          const sessionId = this.feature.getActiveSessionId();
+          const messages = this.feature.getMessages(sessionId);
+          this.feature.refs.messageList.innerHTML = messages.map((msg) => {
+            if (msg.type === 'vote') {
+              return `
+                <article class="f-chat__message ${msg.author === '我' ? 'is-self' : ''}">
+                  <div class="f-chat__message-meta">${escapeHtml(msg.author)} · ${escapeHtml(msg.createdAtLabel || '')}</div>
+                  <div class="f-chat__bubble">
+                    <div class="f-chat__vote-card">
+                      <div class="f-chat__vote-header"><span class="c-badge">投票</span><strong>${escapeHtml(msg.title)}</strong></div>
+                      <div class="u-text-muted">${escapeHtml(msg.description || '')}</div>
+                      <div class="f-chat__vote-options">
+                        ${(msg.options || []).map((option) => `<button class="f-chat__vote-option ${option.selected ? 'is-selected' : ''}" disabled><span>${escapeHtml(option.text)}</span><strong>${option.count}</strong></button>`).join('')}
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              `;
+            }
+            return `
+              <article class="f-chat__message ${msg.author === '我' ? 'is-self' : ''}">
+                <div class="f-chat__message-meta">${escapeHtml(msg.author)} · ${escapeHtml(msg.createdAtLabel || '')}</div>
+                <div class="f-chat__bubble">${escapeHtml(msg.text || '')}</div>
+              </article>
+            `;
+          }).join('');
+          this.feature.refs.messageList.scrollTop = this.feature.refs.messageList.scrollHeight;
+        }
+      }
+
+      class ChatComposer {
+        constructor(feature) { this.feature = feature; }
+        syncInput() { const draft = this.feature.getDraft(); if (this.feature.refs.input.value !== draft) this.feature.refs.input.value = draft; }
+        renderCandidates() {
+          const keyword = this.feature.getDraft().trim();
+          const source = ['收到', '好的', '稍后处理', '今晚我来合并', '先把骨架跑起来', '公告弹窗要统一'];
+          const list = keyword ? source.filter((item) => item.includes(keyword)).slice(0, 6) : source.slice(0, 5);
+          this.feature.refs.candidatePanel.innerHTML = list.map((item) => `<button class="f-chat__candidate-item" data-action="pick-candidate" data-value="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join('');
+        }
+        bindInput() {
+          this.feature.unsubscribe.push(dom.on(this.feature.refs.input, 'input', () => { this.feature.setDraft(this.feature.refs.input.value); }));
+          this.feature.unsubscribe.push(dom.on(this.feature.refs.input, 'keydown', (event) => {
+            if (event.isComposing) return;
+            if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); this.send(); }
+          }));
+        }
+        send() {
+          const value = this.feature.refs.input.value.trim();
+          if (!value) return;
+          this.feature.sendText(value);
+        }
+      }
+
+      class ChatVoteFeature {
+        constructor(feature) { this.feature = feature; }
+        openModal() {
+          const titleId = uid('voteTitle');
+          const descId = uid('voteDesc');
+          const op1 = uid('op1'); const op2 = uid('op2'); const op3 = uid('op3');
+          new ModalBase({
+            title: '发起投票',
+            content: () => {
+              const wrap = dom.create('div', 'c-field');
+              wrap.innerHTML = `
+                <div class="c-field"><label class="c-field__label" for="${titleId}">标题</label><input class="c-input" id="${titleId}" /></div>
+                <div class="c-field"><label class="c-field__label" for="${descId}">描述</label><textarea class="c-textarea" id="${descId}" rows="3"></textarea></div>
+                <div class="c-field"><label class="c-field__label" for="${op1}">选项 1</label><input class="c-input" id="${op1}" /></div>
+                <div class="c-field"><label class="c-field__label" for="${op2}">选项 2</label><input class="c-input" id="${op2}" /></div>
+                <div class="c-field"><label class="c-field__label" for="${op3}">选项 3</label><input class="c-input" id="${op3}" /></div>
+              `;
+              return wrap;
+            },
+            actions: [
+              { label: '取消', onClick: (m) => m.close() },
+              { label: '创建', variant: 'c-btn--primary', onClick: async (m) => {
+                  const title = document.getElementById(titleId).value.trim();
+                  const description = document.getElementById(descId).value.trim();
+                  const options = [op1, op2, op3].map((id) => document.getElementById(id).value.trim()).filter(Boolean);
+                  if (!title || options.length < 2) { toast.show('创建失败', '标题不能为空，且至少需要 2 个选项'); return; }
+                  try {
+                    await this.feature.services.chat.sendVote({ sessionId: this.feature.getActiveSessionId(), title, description, options });
+                    await this.feature.refreshMessages();
+                    m.close();
+                    toast.show('投票已创建', title);
+                  } catch (error) {
+                    toast.show('创建失败', error.message || '未知错误');
+                  }
+                }
+              }
+            ]
+          }).open();
+        }
+      }
+
+      class ChatAnnouncementFeature {
+        constructor(feature) { this.feature = feature; }
+        render() {
+          const sessionId = this.feature.getActiveSessionId();
+          const text = this.feature.getAnnouncement(sessionId) || '';
+          this.feature.refs.announcementSlot.innerHTML = text ? `<div class="f-chat__announcement"><span class="c-badge">公告</span><div>${escapeHtml(text)}</div></div>` : '';
+        }
+        openEditor() {
+          const textareaId = uid('announcement');
+          const currentValue = this.feature.getAnnouncement(this.feature.getActiveSessionId()) || '';
+          new ModalBase({
+            title: '编辑公告',
+            content: () => {
+              const wrap = dom.create('div', 'c-field');
+              wrap.innerHTML = `<label class="c-field__label" for="${textareaId}">公告内容</label><textarea id="${textareaId}" class="c-textarea" rows="8">${escapeHtml(currentValue)}</textarea>`;
+              return wrap;
+            },
+            actions: [
+              { label: '取消', onClick: (m) => m.close() },
+              { label: '保存', variant: 'c-btn--primary', onClick: async (m) => {
+                  try {
+                    const value = document.getElementById(textareaId).value.trim();
+                    await this.feature.services.chat.setAnnouncement({ sessionId: this.feature.getActiveSessionId(), announcement: value });
+                    await this.feature.refreshAnnouncement();
+                    toast.show('公告已更新', value || '已清空');
+                    m.close();
+                  } catch (error) {
+                    toast.show('保存失败', error.message || '未知错误');
+                  }
+                }
+              }
+            ]
+          }).open();
+        }
+      }
+
+      class ChatAttachmentFeature {
+        constructor(feature) { this.feature = feature; }
+        openImagePicker() { toast.show('图片发送', '这里预留给旧版图片发送、预览、状态逻辑接入。'); }
+        openFilePicker() { toast.show('文件发送', '这里预留给旧版文件发送、下载、状态逻辑接入。'); }
+      }
+
+      class ChatWriteboardFeature {
+        constructor(feature) { this.feature = feature; }
+        open() {
+          const content = dom.create('div', 'c-field');
+          content.innerHTML = '<span class="c-badge">写字板</span><strong>这里预留给旧版写字板迁移</strong><p style="margin:0;line-height:1.6;">当前骨架先把 feature 边界立起来，后续再迁入画笔、撤销重做、图片输出等逻辑。</p>';
+          new ModalBase({ title: '打开写字板', content, actions: [{ label: '关闭', onClick: (m) => m.close() }] }).open();
+        }
+      }
+
+      class ChatFeature extends FeatureBase {
+        constructor(root, store, services) {
+          super(root, store, services);
+          this.refs = {};
+          this.sessionPane = new ChatSessionList(this);
+          this.messageRenderer = new ChatMessageRenderer(this);
+          this.composer = new ChatComposer(this);
+          this.voteFeature = new ChatVoteFeature(this);
+          this.announcementFeature = new ChatAnnouncementFeature(this);
+          this.attachmentFeature = new ChatAttachmentFeature(this);
+          this.writeboardFeature = new ChatWriteboardFeature(this);
+          this.pollTimer = null;
+        }
+        getState() { return this.store.getState(); }
+        getChatState() { return this.getState().chat; }
+        getSessions() { return this.getChatState().sessions || []; }
+        getActiveSessionId() { return this.getChatState().activeSessionId || ''; }
+        getActiveSession() { return this.getSessions().find((item) => item.id === this.getActiveSessionId()) || this.getSessions()[0] || null; }
+        getDraft() { const sessionId = this.getActiveSessionId(); return this.getChatState().draftBySessionId[sessionId] || ''; }
+        setDraft(value) { const sessionId = this.getActiveSessionId(); this.store.update('chat', (state) => { state.chat.draftBySessionId[sessionId] = value; }); }
+        getMessages(sessionId) { return this.getChatState().messagesBySessionId[sessionId] || []; }
+        getAnnouncement(sessionId) { return this.getChatState().announcementsBySessionId[sessionId] || ''; }
+        setActiveSessionId(sessionId) { this.store.update('chat', (state) => { state.chat.activeSessionId = sessionId; }); this.refreshSessionDerivedData(); }
+        async bootstrap() {
+          try {
+            const contacts = await this.services.chat.contacts();
+            this.store.update('chat', (state) => {
+              state.chat.sessions = contacts.sessions || [];
+              if (!state.chat.activeSessionId && state.chat.sessions[0]) state.chat.activeSessionId = state.chat.sessions[0].id;
+            });
+            await this.refreshSessionDerivedData();
+          } catch (error) {
+            toast.show('聊天初始化失败', error.message || '未知错误');
+          }
+        }
+        async refreshSessionDerivedData() { await Promise.all([this.refreshMessages(), this.refreshAnnouncement()]); }
+        async refreshMessages() {
+          const session = this.getActiveSession();
+          if (!session) return;
+          const result = await this.services.chat.load(session.id);
+          this.store.update('chat', (state) => {
+            state.chat.messagesBySessionId[session.id] = result.messages || [];
+            const item = state.chat.sessions.find((row) => row.id === session.id);
+            if (item && result.messages && result.messages.length) item.lastMessage = result.messages[result.messages.length - 1].type === 'vote' ? '[投票] ' + result.messages[result.messages.length - 1].title : result.messages[result.messages.length - 1].text;
+          });
+          this.renderAll();
+        }
+        async refreshAnnouncement() {
+          const session = this.getActiveSession();
+          if (!session) return;
+          const result = await this.services.chat.getAnnouncement(session.id);
+          this.store.update('chat', (state) => { state.chat.announcementsBySessionId[session.id] = result.announcement || ''; });
+          this.announcementFeature.render();
+        }
+        async sendText(value) {
+          try {
+            await this.services.chat.sendText({ sessionId: this.getActiveSessionId(), text: value });
+            this.store.update('chat', (state) => { state.chat.draftBySessionId[this.getActiveSessionId()] = ''; });
+            await this.refreshMessages();
+          } catch (error) {
+            toast.show('发送失败', error.message || '未知错误');
+          }
+        }
+        startPolling() {
+          if (this.pollTimer) clearInterval(this.pollTimer);
+          this.pollTimer = setInterval(() => { this.refreshMessages().catch(() => {}); }, 5000);
+        }
+        render() {
+          this.root.innerHTML = `
+            <div class="f-chat l-split">
+              <aside class="l-sidebar">
+                <div class="l-sidebar__header"><strong>会话</strong><span class="u-flex-grow"></span><span class="c-badge" data-role="session-count">0</span></div>
+                <div class="l-sidebar__body" data-role="session-list"></div>
+              </aside>
+              <section class="l-content">
+                <div class="l-content__header"><strong data-role="chat-title">聊天</strong><span class="u-flex-grow"></span><button class="c-btn c-btn--ghost" data-action="edit-announcement">编辑公告</button></div>
+                <div data-role="announcement-slot"></div>
+                <div class="f-chat__messages" data-role="message-list"></div>
+                <div class="f-chat__composer-wrap">
+                  <div class="f-chat__toolbar">
+                    <button class="c-btn c-btn--ghost" data-action="insert-template">插入模板</button>
+                    <button class="c-btn c-btn--ghost" data-action="open-vote-modal">发起投票</button>
+                    <button class="c-btn c-btn--ghost" data-action="fake-upload-image">图片</button>
+                    <button class="c-btn c-btn--ghost" data-action="fake-upload-file">文件</button>
+                    <button class="c-btn c-btn--ghost" data-action="open-writeboard">写字板</button>
+                  </div>
+                  <div class="f-chat__candidate-panel" data-role="candidate-panel"></div>
+                  <div class="f-chat__composer">
+                    <textarea class="c-textarea" rows="4" placeholder="输入消息，Shift+Enter 换行，Enter 发送" data-role="chat-input"></textarea>
+                    <button class="c-btn c-btn--primary" data-action="send-message">发送</button>
+                  </div>
+                </div>
+              </section>
+            </div>
+          `;
+          this.refs = {
+            sessionCount: dom.qs(this.root, '[data-role="session-count"]'),
+            sessionList: dom.qs(this.root, '[data-role="session-list"]'),
+            title: dom.qs(this.root, '[data-role="chat-title"]'),
+            announcementSlot: dom.qs(this.root, '[data-role="announcement-slot"]'),
+            messageList: dom.qs(this.root, '[data-role="message-list"]'),
+            candidatePanel: dom.qs(this.root, '[data-role="candidate-panel"]'),
+            input: dom.qs(this.root, '[data-role="chat-input"]')
+          };
+          this.renderAll();
+          this.bootstrap();
+          this.startPolling();
+        }
+        renderAll() {
+          const session = this.getActiveSession();
+          this.refs.title.textContent = session ? session.name : '聊天';
+          this.sessionPane.render();
+          this.announcementFeature.render();
+          this.messageRenderer.render();
+          this.composer.syncInput();
+          this.composer.renderCandidates();
+        }
+        bindEvents() {
+          this.unsubscribe.push(dom.on(this.root, 'click', (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+            if (action === 'switch-session') this.setActiveSessionId(actionEl.dataset.sessionId);
+            else if (action === 'send-message') this.composer.send();
+            else if (action === 'insert-template') { this.setDraft((this.getDraft().trim() ? this.getDraft().trim() + '\n' : '') + '我先按单文件骨架整理一版，再逐步迁移旧逻辑。'); this.composer.syncInput(); this.composer.renderCandidates(); }
+            else if (action === 'open-vote-modal') this.voteFeature.openModal();
+            else if (action === 'edit-announcement') this.announcementFeature.openEditor();
+            else if (action === 'fake-upload-image') this.attachmentFeature.openImagePicker();
+            else if (action === 'fake-upload-file') this.attachmentFeature.openFilePicker();
+            else if (action === 'open-writeboard') this.writeboardFeature.open();
+            else if (action === 'pick-candidate') { this.setDraft(actionEl.dataset.value || ''); this.composer.syncInput(); this.composer.renderCandidates(); this.refs.input.focus(); }
+          }));
+          this.composer.bindInput();
+          this.unsubscribe.push(this.store.subscribe('chat', () => this.renderAll()));
+        }
+        destroy() { super.destroy(); if (this.pollTimer) clearInterval(this.pollTimer); }
+      }
+
+      class DriveFeature extends FeatureBase {
+        constructor(root, store, services) { super(root, store, services); this.refs = {}; }
+        getState() { return this.store.getState().drive; }
+        async refresh() {
+          try {
+            const result = await this.services.drive.list(this.getState().bucket, this.getState().path);
+            this.store.update('drive', (state) => { state.drive.items = result.items || []; });
+            this.renderAll();
+          } catch (error) {
+            toast.show('网盘刷新失败', error.message || '未知错误');
+          }
+        }
+        render() {
+          this.root.innerHTML = `
+            <div class="l-split">
+              <aside class="l-sidebar">
+                <div class="l-sidebar__header"><strong>目录</strong></div>
+                <div class="l-sidebar__body c-list" data-role="drive-buckets"></div>
+              </aside>
+              <section class="l-content">
+                <div class="l-content__header"><div class="f-drive__path" data-role="drive-path"></div><span class="u-flex-grow"></span><div data-role="drive-actions"></div></div>
+                <div class="l-content__body"><div data-role="drive-transfer"></div><div class="f-drive__grid" data-role="drive-grid"></div></div>
+              </section>
+            </div>
+          `;
+          this.refs = { buckets: dom.qs(this.root, '[data-role="drive-buckets"]'), path: dom.qs(this.root, '[data-role="drive-path"]'), actions: dom.qs(this.root, '[data-role="drive-actions"]'), transfer: dom.qs(this.root, '[data-role="drive-transfer"]'), grid: dom.qs(this.root, '[data-role="drive-grid"]') };
+          this.renderAll();
+          this.refresh();
+        }
+        renderAll() {
+          const state = this.getState();
+          const buckets = [{ id: 'mine', label: '我的文件' }, { id: 'team', label: '团队共享' }, { id: 'recent', label: '最近访问' }];
+          this.refs.buckets.innerHTML = buckets.map((item) => `<div class="c-list-item" data-action="set-drive-bucket" data-bucket="${item.id}">${escapeHtml(item.label)}</div>`).join('');
+          this.refs.path.innerHTML = '<strong>/</strong><span>' + escapeHtml(state.bucket) + '</span><span>/</span><span>' + escapeHtml(state.path) + '</span>';
+          this.refs.actions.innerHTML = '<button class="c-btn c-btn--ghost" data-action="drive-upload">上传</button><button class="c-btn c-btn--primary" data-action="drive-new-folder">新建目录</button>';
+          const tasks = this.store.getState().tasks.slice(0, 2);
+          this.refs.transfer.innerHTML = tasks.length ? `<div class="c-panel" style="margin-bottom:14px;padding:14px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><span class="c-badge">传输</span><strong>最近任务</strong></div>${tasks.map((task) => `<div class="u-text-muted" style="margin:6px 0;">${escapeHtml(task.name)} · ${escapeHtml(task.status)} · ${task.progress}%</div>`).join('')}</div>` : '';
+          this.refs.grid.innerHTML = state.items.map((item) => `<article class="f-drive__item c-panel"><div class="f-drive__item-name">${escapeHtml(item.type === 'folder' ? '📁 ' : '📄 ')}${escapeHtml(item.name)}</div><div class="u-text-muted">大小：${escapeHtml(item.size || '—')}</div><div class="u-text-muted">更新时间：${escapeHtml(item.updatedAtLabel || '')}</div></article>`).join('');
+        }
+        bindEvents() {
+          this.unsubscribe.push(dom.on(this.root, 'click', async (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+            if (action === 'set-drive-bucket') {
+              this.store.update('drive', (state) => { state.drive.bucket = actionEl.dataset.bucket; });
+              await this.refresh();
+            } else if (action === 'drive-new-folder') {
+              const folderName = window.prompt('请输入目录名', '新建目录');
+              if (!folderName) return;
+              try { await this.services.drive.createFolder({ bucket: this.getState().bucket, path: this.getState().path, name: folderName }); await this.refresh(); toast.show('目录已创建', folderName); } catch (error) { toast.show('创建失败', error.message || '未知错误'); }
+            } else if (action === 'drive-upload') {
+              const fileName = window.prompt('模拟上传文件名', 'demo.txt');
+              if (!fileName) return;
+              try { await this.services.drive.uploadInit({ bucket: this.getState().bucket, path: this.getState().path, fileName, size: 128 * 1024 }); await this.refresh(); toast.show('已创建上传任务', fileName); } catch (error) { toast.show('上传失败', error.message || '未知错误'); }
+            }
+          }));
+          this.unsubscribe.push(this.store.subscribe('drive', () => this.renderAll()));
+        }
+      }
+
+      class AdminFeature extends FeatureBase {
+        constructor(root, store, services) { super(root, store, services); this.refs = {}; }
+        async bootstrap() {
+          try {
+            const [status, settings] = await Promise.all([this.services.admin.status(), this.services.admin.getSettings()]);
+            this.store.update(['admin'], (state) => { state.admin.status = status; state.admin.settings = settings.settings || {}; });
+          } catch (error) {
+            toast.show('后台初始化失败', error.message || '未知错误');
+          }
+        }
+        render() {
+          this.root.innerHTML = `
+            <div class="l-split">
+              <aside class="l-sidebar"><div class="l-sidebar__header"><strong>管理</strong></div><div class="l-sidebar__body c-list"><div class="c-list-item">服务状态</div><div class="c-list-item">系统设置</div><div class="c-list-item">备份预览</div></div></aside>
+              <section class="l-content"><div class="l-content__header"><strong>后台面板</strong><span class="u-flex-grow"></span><button class="c-btn c-btn--ghost" data-action="admin-backup">查看备份</button><button class="c-btn c-btn--primary" data-action="admin-save-settings">保存设置</button></div><div class="l-content__body" data-role="admin-body"></div></section>
+            </div>
+          `;
+          this.refs = { body: dom.qs(this.root, '[data-role="admin-body"]') };
+          this.renderAll();
+          this.bootstrap();
+        }
+        renderAll() {
+          const state = this.store.getState().admin;
+          const status = state.status || { runtime: 'workers', storage: 'memory', uptime: 0 };
+          const settings = state.settings || {};
+          this.refs.body.innerHTML = `
+            <div class="c-list">
+              <article class="f-admin__card c-panel">
+                <div class="f-admin__row"><strong>服务状态</strong><span class="u-flex-grow"></span><span class="c-badge">${escapeHtml(status.runtime || 'workers')}</span></div>
+                <div class="f-admin__meta" style="margin-top:8px;"><span>存储：${escapeHtml(status.storage || 'memory')}</span><span>会话数：${escapeHtml(String(status.sessionCount || 0))}</span><span>插件数：${escapeHtml(String(status.pluginCount || 0))}</span></div>
+              </article>
+              <article class="f-admin__card c-panel">
+                <div class="c-field"><label class="c-field__label" for="setting-notice">全体通知</label><textarea id="setting-notice" class="c-textarea" rows="4">${escapeHtml(settings.peopleNotice || '')}</textarea></div>
+                <div class="c-field" style="margin-top:12px;"><label class="c-field__label" for="setting-app">应用标题</label><input id="setting-app" class="c-input" value="${escapeHtml(settings.appTitle || 'Checkin Skeleton')}" /></div>
+              </article>
+            </div>
+          `;
+        }
+        bindEvents() {
+          this.unsubscribe.push(dom.on(this.root, 'click', async (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            if (actionEl.dataset.action === 'admin-save-settings') {
+              try {
+                const peopleNotice = dom.qs(this.root, '#setting-notice').value.trim();
+                const appTitle = dom.qs(this.root, '#setting-app').value.trim();
+                await this.services.admin.updateSettings({ peopleNotice, appTitle });
+                await this.bootstrap();
+                toast.show('设置已保存', '后台设置已经同步');
+              } catch (error) {
+                toast.show('保存失败', error.message || '未知错误');
+              }
+            } else if (actionEl.dataset.action === 'admin-backup') {
+              try {
+                const backup = await this.services.admin.backup();
+                const content = dom.create('pre', '');
+                content.style.margin = '0'; content.style.whiteSpace = 'pre-wrap'; content.textContent = JSON.stringify(backup, null, 2);
+                new ModalBase({ title: '备份预览', width: 860, content, actions: [{ label: '关闭', onClick: (m) => m.close() }] }).open();
+              } catch (error) {
+                toast.show('读取失败', error.message || '未知错误');
+              }
+            }
+          }));
+          this.unsubscribe.push(this.store.subscribe('admin', () => this.renderAll()));
+        }
+      }
+
+      class PluginManager extends FeatureBase {
+        constructor(store, services) { super(null, store, services); }
+        async open() {
+          try {
+            const listResult = await this.services.plugins.list();
+            this.store.update('plugins', (state) => { state.plugins.items = listResult.items || []; });
+          } catch (error) {
+            toast.show('插件列表读取失败', error.message || '未知错误');
+          }
+          const modal = new ModalBase({
+            title: '插件管理',
+            width: 920,
+            content: () => {
+              const wrap = dom.create('div');
+              wrap.innerHTML = '<div class="c-field" style="margin-bottom:16px;"><label class="c-field__label">搜索插件</label><input class="c-input" data-role="plugin-search" placeholder="输入名称或作者" /></div><div class="c-list" data-role="plugin-list"></div>';
+              const searchInput = dom.qs(wrap, '[data-role="plugin-search"]');
+              const listRoot = dom.qs(wrap, '[data-role="plugin-list"]');
+              const render = () => {
+                const keyword = (searchInput.value || '').trim().toLowerCase();
+                const items = this.store.getState().plugins.items.filter((item) => !keyword || item.name.toLowerCase().includes(keyword) || item.author.toLowerCase().includes(keyword));
+                listRoot.innerHTML = items.map((item) => `
+                  <article class="f-plugin__item c-panel">
+                    <div class="f-plugin__row"><strong>${escapeHtml(item.name)}</strong><span class="c-badge">v${escapeHtml(item.version)}</span><span class="u-flex-grow"></span><button class="c-btn c-btn--ghost" data-action="plugin-detail" data-plugin-id="${item.id}">详情</button><button class="c-btn ${item.enabled ? '' : 'c-btn--primary'}" data-action="plugin-toggle" data-plugin-id="${item.id}">${item.enabled ? '停用' : '启用'}</button></div>
+                    <div style="margin-top:8px;">${escapeHtml(item.description || '')}</div>
+                    <div class="f-plugin__meta" style="margin-top:8px;"><span>作者 ${escapeHtml(item.author || '')}</span><span>状态 ${item.enabled ? '已启用' : '未启用'}</span></div>
+                  </article>
+                `).join('');
+              };
+              render();
+              searchInput.addEventListener('input', render);
+              wrap.addEventListener('click', async (event) => {
+                const btn = event.target.closest('[data-action]');
+                if (!btn) return;
+                const pluginId = btn.dataset.pluginId;
+                if (btn.dataset.action === 'plugin-toggle') {
+                  try {
+                    const current = this.store.getState().plugins.items.find((item) => item.id === pluginId);
+                    if (!current) return;
+                    if (current.enabled) await this.services.plugins.deactivate(pluginId);
+                    else await this.services.plugins.activate(pluginId);
+                    const refreshed = await this.services.plugins.list();
+                    this.store.update('plugins', (state) => { state.plugins.items = refreshed.items || []; });
+                    render();
+                    toast.show('插件状态已更新', current.name);
+                  } catch (error) {
+                    toast.show('操作失败', error.message || '未知错误');
+                  }
+                } else if (btn.dataset.action === 'plugin-detail') {
+                  try {
+                    const detail = await this.services.plugins.detail(pluginId);
+                    const content = dom.create('div', 'c-field');
+                    content.innerHTML = `<strong>${escapeHtml(detail.item.name)} · v${escapeHtml(detail.item.version)}</strong><p style="margin:0;line-height:1.6;">${escapeHtml(detail.item.description || '')}</p><div class="u-text-muted">作者：${escapeHtml(detail.item.author || '')} · 入口：${escapeHtml(detail.item.entry || 'index.js')}</div>`;
+                    new ModalBase({ title: '插件详情', content, actions: [{ label: '关闭', onClick: (m) => m.close() }] }).open();
+                  } catch (error) {
+                    toast.show('读取详情失败', error.message || '未知错误');
+                  }
+                }
+              });
+              return wrap;
+            },
+            actions: [{ label: '关闭', onClick: (m) => m.close() }]
+          });
+          modal.open();
+        }
+      }
+
+      class TaskPanel {
+        constructor(store, services) { this.store = store; this.services = services; }
+        async open() {
+          try {
+            const result = await this.services.tasks.list();
+            this.store.update('tasks', (state) => { state.tasks = result.items || []; });
+          } catch (error) {
+            toast.show('任务列表读取失败', error.message || '未知错误');
+          }
+          const wrap = dom.create('div', 'c-list');
+          const tasks = this.store.getState().tasks || [];
+          tasks.forEach((task) => {
+            const item = dom.create('article', 'f-task__item c-panel');
+            item.innerHTML = `<div class="u-row"><strong>${escapeHtml(task.name)}</strong><span class="u-flex-grow"></span><span class="u-text-muted">${escapeHtml(task.status)}</span></div><div class="f-task__progress" style="margin-top:10px;"><div class="f-task__progress-bar" style="width:${task.progress}%"></div></div>`;
+            wrap.appendChild(item);
+          });
+          new ModalBase({ title: '后台任务', content: wrap, actions: [{ label: '关闭', onClick: (m) => m.close() }] }).open();
+        }
+      }
+
+      class App {
+        constructor() {
+          this.store = createStore(createSeed());
+          const api = new ApiClient(APP_CONFIG.apiBase);
+          this.services = {
+            auth: new AuthService(api),
+            chat: new ChatService(api),
+            drive: new DriveService(api),
+            plugins: new PluginServiceApi(api),
+            admin: new AdminService(api),
+            tasks: new TaskService(api)
+          };
+          this.router = null;
+          this.chatFeature = null;
+          this.driveFeature = null;
+          this.adminFeature = null;
+          this.pluginManager = new PluginManager(this.store, this.services);
+          this.taskPanel = new TaskPanel(this.store, this.services);
+        }
+        async hydrateAuth() {
+          try {
+            const me = await this.services.auth.me();
+            this.store.update('auth', (state) => { state.auth.user = me.user || null; state.auth.ready = true; });
+          } catch {
+            this.store.update('auth', (state) => { state.auth.user = null; state.auth.ready = true; });
+          }
+          this.renderAuthBadge();
+        }
+        renderAuthBadge() {
+          const user = this.store.getState().auth.user;
+          document.getElementById('currentUserBadge').textContent = user ? (user.name + ' / ' + user.role) : '匿名';
+          document.getElementById('connectionBadge').textContent = user ? '已连接' : '未登录';
+        }
+        openLoginModal() {
+          const usernameId = uid('username');
+          const passwordId = uid('password');
+          new ModalBase({
+            title: '登录',
+            content: () => {
+              const wrap = dom.create('div', 'c-field');
+              wrap.innerHTML = `<div class="c-field"><label class="c-field__label" for="${usernameId}">用户名</label><input id="${usernameId}" class="c-input" value="alice" /></div><div class="c-field"><label class="c-field__label" for="${passwordId}">密码</label><input id="${passwordId}" class="c-input" type="password" value="alice123" /></div><div class="u-text-muted">演示账号：alice / alice123，管理员：admin / admin123</div>`;
+              return wrap;
+            },
+            actions: [
+              { label: '取消', onClick: (m) => m.close() },
+              { label: '登录', variant: 'c-btn--primary', onClick: async (m) => {
+                  try {
+                    const username = document.getElementById(usernameId).value.trim();
+                    const password = document.getElementById(passwordId).value;
+                    await this.services.auth.login({ username, password });
+                    await this.hydrateAuth();
+                    await this.chatFeature.bootstrap();
+                    await this.driveFeature.refresh();
+                    await this.adminFeature.bootstrap();
+                    toast.show('登录成功', username);
+                    m.close();
+                  } catch (error) {
+                    toast.show('登录失败', error.message || '未知错误');
+                  }
+                }
+              }
+            ]
+          }).open();
+        }
+        bindGlobalActions() {
+          document.body.addEventListener('click', async (event) => {
+            const actionEl = event.target.closest('[data-action]');
+            if (!actionEl) return;
+            const action = actionEl.dataset.action;
+            if (action === 'toggle-theme') theme.toggle();
+            else if (action === 'open-plugin-manager') this.pluginManager.open();
+            else if (action === 'open-login') this.openLoginModal();
+          });
+          document.getElementById('taskBall').addEventListener('click', () => this.taskPanel.open());
+        }
+        start() {
+          theme.init();
+          this.router = new PanelRouter({ navRoot: dom.qs('[data-role="panel-nav"]'), panelRoots: dom.qsa(document, '.l-panel') });
+          this.router.init();
+          renderHome(dom.qs('[data-panel="home"]'), this.router);
+          this.chatFeature = new ChatFeature(dom.qs('[data-panel="chat"]'), this.store, this.services).init();
+          this.driveFeature = new DriveFeature(dom.qs('[data-panel="drive"]'), this.store, this.services).init();
+          this.adminFeature = new AdminFeature(dom.qs('[data-panel="admin"]'), this.store, this.services).init();
+          this.bindGlobalActions();
+          this.hydrateAuth();
+          toast.show('前端骨架已加载', '已接入单文件 Workers 后端接口风格，可直接联调。');
+        }
+      }
+
+      window.checkinSingleFileApp = new App();
+      window.checkinSingleFileApp.start();
+    })();
+  </script>
+</body>
+</html>
