@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkin Single File E2EE Demo</title>
+  <style>
+    :root {
+      --bg:#f5f7fb;--card:#fff;--soft:#eef3f8;--line:#d8e0ea;--text:#1f2937;--muted:#6b7280;--pri:#2f6ea7;--pri2:#3d7db8;--ok:#1f9d55;--bad:#dc3545;
+    }
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text)}
+    .app{height:100%;display:grid;grid-template-rows:56px 1fr}.header{display:flex;align-items:center;gap:10px;padding:0 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    .brand{font-weight:700;font-size:18px}.tabs{display:flex;gap:8px}.tab{height:36px;padding:0 14px;border:none;border-radius:10px;background:transparent;cursor:pointer;color:var(--muted)}.tab.active{background:#e8f1fa;color:var(--pri);font-weight:700}
+    .tools{margin-left:auto;display:flex;gap:8px;align-items:center}.badge{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:999px;background:#e8f1fa;color:var(--pri);font-size:12px;font-weight:600}
+    .btn{height:36px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer}.btn:hover{background:var(--soft)}.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}.btn.pri:hover{background:var(--pri2)}
+    .main{min-height:0}.panel{height:100%;display:none;padding:16px}.panel.active{display:block}.split{height:100%;min-height:0;display:grid;grid-template-columns:280px 1fr;gap:16px}.sidebar,.content{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}.sidebar{display:flex;flex-direction:column}.content{display:flex;flex-direction:column}
+    .hd{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);background:#fafcff}.bd{min-height:0;overflow:auto;padding:12px}
+    .session{padding:12px;border:1px solid transparent;border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:10px}.session:hover{background:var(--soft)}.session.active{background:#e8f1fa;border-color:#c7dbef}.session .meta{min-width:0}.session .name{font-weight:700}.session .sub{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .home{max-width:1000px;margin:0 auto;background:var(--card);border:1px solid var(--line);border-radius:22px;padding:28px}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.entry{padding:18px;border:1px solid var(--line);border-radius:18px;background:#fafcff;cursor:pointer}.entry:hover{border-color:var(--pri)}
+    .messages{flex:1;min-height:0;overflow:auto;padding:12px 16px;background:linear-gradient(#fff,#f7fbff)}.msg{max-width:760px;display:flex;flex-direction:column;gap:6px;margin-bottom:14px}.msg.self{margin-left:auto;align-items:flex-end}.bubble{padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);white-space:pre-wrap;word-break:break-word}.msg.self .bubble{background:#e8f1fa;border-color:#c7dbef}.meta2{font-size:12px;color:var(--muted)}
+    .composerWrap{border-top:1px solid var(--line);padding:12px 14px;display:flex;flex-direction:column;gap:10px}.composer{display:grid;grid-template-columns:1fr auto;gap:10px}.toolbar{display:flex;gap:8px;flex-wrap:wrap}.cands{display:flex;gap:8px;overflow:auto}.cand{padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fafcff;white-space:nowrap;cursor:pointer}.cand:hover{border-color:var(--pri);color:var(--pri)}
+    input,textarea,select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--text);font:inherit} textarea{resize:none}
+    .announce{margin:12px;border:1px solid var(--line);border-radius:12px;background:#fafcff;padding:12px 14px;display:flex;gap:10px}.field{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}.muted{color:var(--muted)}
+    .list{display:flex;flex-direction:column;gap:10px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}.row{display:flex;align-items:center;gap:8px}.grow{flex:1}.tasks-btn{position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;border:none;background:var(--pri);color:#fff;font-size:22px;cursor:pointer;box-shadow:0 12px 28px rgba(15,23,42,.18)}
+    .toastWrap{position:fixed;top:16px;right:16px;display:flex;flex-direction:column;gap:10px;z-index:50}.toast{min-width:280px;max-width:360px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:0 12px 28px rgba(15,23,42,.12)}.toast b{display:block;margin-bottom:4px}
+    .modalRoot{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:40}.modalRoot.open{display:flex}.modal{width:min(820px,100%);max-height:calc(100vh - 40px);display:flex;flex-direction:column;background:var(--card);border-radius:20px;border:1px solid var(--line);overflow:hidden}.modalHd,.modalFt{padding:16px 18px;background:#fafcff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}.modalFt{border-top:1px solid var(--line);border-bottom:none;justify-content:flex-end}.modalBd{padding:18px;overflow:auto}
+    pre.json{margin:0;white-space:pre-wrap;word-break:break-word;background:#0f172a;color:#dbeafe;padding:14px;border-radius:12px;max-height:60vh;overflow:auto}
+    @media (max-width:980px){.grid{grid-template-columns:1fr}.split{grid-template-columns:1fr}.sidebar{max-height:280px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="brand">Checkin</div>
+    <nav class="tabs" id="tabs"></nav>
+    <div class="tools">
+      <span class="badge" id="statusBadge">未登录</span>
+      <span class="badge" id="userBadge">匿名</span>
+      <button class="btn" id="pluginsBtn">插件</button>
+      <button class="btn" id="devicesBtn">设备</button>
+      <button class="btn" id="loginBtn">登录</button>
+    </div>
+  </header>
+  <main class="main">
+    <section class="panel active" data-panel="home"></section>
+    <section class="panel" data-panel="chat"></section>
+    <section class="panel" data-panel="drive"></section>
+    <section class="panel" data-panel="admin"></section>
+  </main>
+</div>
+<div class="toastWrap" id="toastWrap"></div>
+<div class="modalRoot" id="modalRoot"></div>
+<button class="tasks-btn" id="tasksBtn">≡</button>
+<script>
+(() => {
+  const APP = { apiBase: window.CHECKIN_API_BASE || 'http://127.0.0.1:8787' };
+  const $ = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+  const html = (s='') => String(s).replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const uid = (p='id') => p + '_' + Math.random().toString(36).slice(2,8);
+  const store = {
+    state: { auth:{user:null,token:'',e2eeReady:false}, e2ee:{publicKeys:{}, localIdentity:null, devices:[]}, chat:{sessions:[], activeSessionId:'', messagesBySessionId:{}, announcementsBySessionId:{}, cursors:{}, drafts:{}}, drive:{bucket:'team', path:'/', items:[]}, admin:{status:null,settings:{}}, plugins:{items:[]}, tasks:[] },
+    ls: {},
+    set(fn){ fn(this.state); renderAll(); },
+    get(){ return this.state; }
+  };
+
+  const tabs = [ {id:'home',label:'首页'}, {id:'chat',label:'聊天'}, {id:'drive',label:'网盘'}, {id:'admin',label:'后台'} ];
+  const router = { current:'home', init(){ $('#tabs').innerHTML = tabs.map(t => `<button class="tab ${t.id===this.current?'active':''}" data-tab="${t.id}">${t.label}</button>`).join(''); $('#tabs').addEventListener('click', e => { const b=e.target.closest('[data-tab]'); if(!b) return; this.go(b.dataset.tab); }); }, go(id){ this.current=id; $$('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===id)); $$('.panel').forEach(p=>p.classList.toggle('active', p.dataset.panel===id)); } };
+
+  const toast = (title, text='') => { const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<b>${html(title)}</b><div>${html(text)}</div>`; $('#toastWrap').appendChild(el); setTimeout(()=>{ el.style.opacity='0'; el.style.transform='translateY(-6px)'; el.style.transition='all .18s ease'; setTimeout(()=>el.remove(),180); }, 2200); };
+
+  function openModal({title, body, actions=[]}) {
+    const root = $('#modalRoot');
+    root.innerHTML = `<div class="modal"><div class="modalHd"><strong>${html(title)}</strong><span class="grow"></span><button class="btn" data-close>关闭</button></div><div class="modalBd"></div><div class="modalFt"></div></div>`;
+    const modal = $('.modal', root), bd = $('.modalBd', root), ft = $('.modalFt', root);
+    if (typeof body === 'string') bd.innerHTML = body; else if (body instanceof Node) bd.appendChild(body); else if (typeof body === 'function') { const n = body(bd) ; if (n instanceof Node) bd.appendChild(n); }
+    actions.forEach(a => { const btn=document.createElement('button'); btn.className='btn ' + (a.primary ? 'pri' : ''); btn.textContent=a.label; btn.onclick=()=>a.onClick(close); ft.appendChild(btn); });
+    function close(){ root.classList.remove('open'); root.innerHTML=''; }
+    $('[data-close]', root).onclick=close; root.onclick=e=>{ if(e.target===root) close(); }; root.classList.add('open');
+    return close;
+  }
+
+  const persist = {
+    get(k, fallback){ try{ const v=localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } },
+    set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
+    remove(k){ localStorage.removeItem(k); }
+  };
+
+  const authStore = {
+    tokenKey:'checkin_sf_token',
+    getToken(){ return persist.get(this.tokenKey, ''); },
+    setToken(v){ persist.set(this.tokenKey, v); },
+    clear(){ persist.remove(this.tokenKey); }
+  };
+  const vaultStore = {
+    key(u){ return 'checkin_sf_vault_'+u; },
+    get(u){ return persist.get(this.key(u), null); },
+    set(u,v){ persist.set(this.key(u), v); },
+    clear(u){ persist.remove(this.key(u)); }
+  };
+
+  async function api(path, opts={}){
+    const token = store.get().auth.token || authStore.getToken();
+    const headers = Object.assign({'content-type':'application/json'}, opts.headers||{});
+    if (token) headers.authorization = 'Bearer ' + token;
+    const res = await fetch(APP.apiBase + path, Object.assign({headers}, opts));
+    const text = await res.text();
+    let data = {}; try{ data = text ? JSON.parse(text) : {}; } catch { data = { ok:false, error:{ message:text || ('HTTP '+res.status) } }; }
+    if (!res.ok || data.ok===false) {
+      const err = data.error || { message: data.message || ('HTTP '+res.status), code:'REQUEST_FAILED', retryable:false };
+      const e = new Error(err.message || '请求失败'); e.info = err; throw e;
+    }
+    return data;
+  }
+
+  const cryptoBox = {
+    bytesToBase64(bytes){ let bin=''; const arr=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes); const chunk=0x8000; for(let i=0;i<arr.length;i+=chunk) bin += String.fromCharCode(...arr.subarray(i,i+chunk)); return btoa(bin); },
+    base64ToBytes(b64){ const bin=atob(b64); const out=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i); return out; },
+    async generateIdentity(){ const keyPair = await crypto.subtle.generateKey({name:'RSA-OAEP', modulusLength:2048, publicExponent:new Uint8Array([1,0,1]), hash:'SHA-256'}, true, ['encrypt','decrypt']); return { publicKeyJwk: await crypto.subtle.exportKey('jwk', keyPair.publicKey), privateKeyJwk: await crypto.subtle.exportKey('jwk', keyPair.privateKey) }; },
+    async importPublic(jwk){ return crypto.subtle.importKey('jwk', jwk, {name:'RSA-OAEP', hash:'SHA-256'}, true, ['encrypt']); },
+    async importPrivate(jwk){ return crypto.subtle.importKey('jwk', jwk, {name:'RSA-OAEP', hash:'SHA-256'}, true, ['decrypt']); },
+    recoveryCode(){ const bytes=crypto.getRandomValues(new Uint8Array(18)); const raw=this.bytesToBase64(bytes).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,'').toUpperCase(); return raw.match(/.{1,4}/g).join('-'); },
+    normalizeCode(v){ return String(v||'').replace(/\s+/g,'').replace(/-/g,'').toUpperCase(); },
+    async deriveRecoveryKey(code, salt, iterations=250000){ const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(this.normalizeCode(code)), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); },
+    async createRecoveryEnvelope(privateKeyJwk, publicKeyJwk, code){ const salt=crypto.getRandomValues(new Uint8Array(16)); const iv=crypto.getRandomValues(new Uint8Array(12)); const iterations=250000; const key = await this.deriveRecoveryKey(code, salt, iterations); const payload=new TextEncoder().encode(JSON.stringify({privateKeyJwk, publicKeyJwk, savedAt:new Date().toISOString()})); const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, payload); return { version:1, iterations, salt:this.bytesToBase64(salt), iv:this.bytesToBase64(iv), ciphertext:this.bytesToBase64(new Uint8Array(ciphertext)) }; },
+    async restoreIdentity(envelope, code){ const key = await this.deriveRecoveryKey(code, this.base64ToBytes(envelope.salt), envelope.iterations||250000); const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:this.base64ToBytes(envelope.iv)}, key, this.base64ToBytes(envelope.ciphertext)); return JSON.parse(new TextDecoder().decode(plain)); },
+    async encryptForRecipients(payload, publicKeysByUserId){ const aesKey=await crypto.subtle.generateKey({name:'AES-GCM', length:256}, true, ['encrypt','decrypt']); const rawAes = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey)); const iv=crypto.getRandomValues(new Uint8Array(12)); const plain=new TextEncoder().encode(JSON.stringify(payload)); const ciphertext=await crypto.subtle.encrypt({name:'AES-GCM', iv}, aesKey, plain); const recipientBoxes={}; for (const [userId,jwk] of Object.entries(publicKeysByUserId||{})){ if(!jwk) continue; const publicKey=await this.importPublic(jwk); const wrapped=await crypto.subtle.encrypt({name:'RSA-OAEP'}, publicKey, rawAes); recipientBoxes[userId]=this.bytesToBase64(new Uint8Array(wrapped)); } if(!Object.keys(recipientBoxes).length) throw new Error('没有可用的接收方公钥'); return { version:1, algorithm:'AES-GCM', keyAlgorithm:'RSA-OAEP', iv:this.bytesToBase64(iv), aad:'', ciphertext:this.bytesToBase64(new Uint8Array(ciphertext)), recipientBoxes, meta:{kind:payload.kind||'text'} }; },
+    async decryptForUser(sealed, privateKeyJwk, userId){ const wrapped = sealed && sealed.recipientBoxes ? sealed.recipientBoxes[userId] : ''; if(!wrapped) throw new Error('当前身份不在接收列表中'); const privateKey=await this.importPrivate(privateKeyJwk); const rawAes=await crypto.subtle.decrypt({name:'RSA-OAEP'}, privateKey, this.base64ToBytes(wrapped)); const aesKey=await crypto.subtle.importKey('raw', rawAes, {name:'AES-GCM'}, false, ['decrypt']); const plain=await crypto.subtle.decrypt({name:'AES-GCM', iv:this.base64ToBytes(sealed.iv)}, aesKey, this.base64ToBytes(sealed.ciphertext)); return JSON.parse(new TextDecoder().decode(plain)); }
+  };
+
+  async function hydrateAuth(){
+    store.set(s => { s.auth.token = authStore.getToken() || ''; });
+    try {
+      const res = await api('/api/auth/me', { method:'GET', headers:{} });
+      store.set(s => { s.auth.user = res.user; });
+      if (res.user) await ensureE2EEReady();
+    } catch {
+      store.set(s => { s.auth.user = null; s.auth.e2eeReady = false; });
+    }
+  }
+
+  function getLocalIdentity(){ const user = store.get().auth.user; return user ? vaultStore.get(user.id) : null; }
+  function currentDeviceId(){ const id = getLocalIdentity(); return id ? id.deviceId : ''; }
+
+  async function ensureE2EEReady(){
+    const user = store.get().auth.user; if(!user) return;
+    let boot = await api('/api/e2ee/bootstrap', { method:'GET', headers:{} });
+    let local = vaultStore.get(user.id);
+    if (!boot.identity.hasIdentity && !local) {
+      local = await openInitE2EE(user);
+      boot = await api('/api/e2ee/bootstrap', { method:'GET', headers:{} });
+    } else if (boot.identity.hasIdentity && !local) {
+      local = await openRestoreE2EE(user);
+      boot = await api('/api/e2ee/bootstrap', { method:'GET', headers:{} });
+    } else if (!boot.identity.hasIdentity && local) {
+      await api('/api/e2ee/setup', { method:'POST', body:JSON.stringify({ publicKeyJwk:local.publicKeyJwk, recoveryEnvelope:local.recoveryEnvelope, deviceId:local.deviceId, deviceName:local.deviceName }) });
+      boot = await api('/api/e2ee/bootstrap', { method:'GET', headers:{} });
+    }
+    if(!local) throw new Error('E2EE 未就绪');
+    await api('/api/e2ee/devices/touch', { method:'POST', body:JSON.stringify({ deviceId:local.deviceId, deviceName:local.deviceName }) });
+    store.set(s => { s.auth.e2eeReady = true; s.e2ee.localIdentity = local; s.e2ee.devices = boot.devices || []; s.e2ee.publicKeys = boot.publicKeys || {}; });
+    await bootstrapAfterAuth();
+  }
+
+  async function openInitE2EE(user){
+    return new Promise((resolve, reject) => {
+      const deviceId = uid('device'); const inputId=uid('name'); const codeId=uid('code'); let generated=null;
+      openModal({
+        title:'初始化端到端加密',
+        body: () => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><div class="muted">首次启用会在浏览器生成一对身份密钥。服务端只保存公钥和你用恢复密钥加密后的私钥备份。</div><label>设备名</label><input id="${inputId}" value="Firefox Web · ${new Date().toLocaleDateString('zh-CN')}" /><label>恢复密钥（请务必保存）</label><textarea id="${codeId}" rows="3" readonly></textarea></div>`; (async()=>{ const identity = await cryptoBox.generateIdentity(); const code=cryptoBox.recoveryCode(); $('#'+codeId, wrap).value = code; generated={identity,code}; })().catch(err=>toast('初始化失败', err.message||'浏览器不支持')); return wrap; },
+        actions:[
+          { label:'取消', onClick: close => { close(); reject(new Error('用户取消初始化')); } },
+          { label:'完成并开始使用', primary:true, onClick: async close => { try { if(!generated) throw new Error('密钥仍在生成'); const deviceName = $('#'+inputId).value.trim() || 'Firefox Web'; const recoveryEnvelope = await cryptoBox.createRecoveryEnvelope(generated.identity.privateKeyJwk, generated.identity.publicKeyJwk, generated.code); const local={ userId:user.id, deviceId, deviceName, publicKeyJwk:generated.identity.publicKeyJwk, privateKeyJwk:generated.identity.privateKeyJwk, recoveryEnvelope }; await api('/api/e2ee/setup',{ method:'POST', body:JSON.stringify({ publicKeyJwk:local.publicKeyJwk, recoveryEnvelope, deviceId, deviceName })}); vaultStore.set(user.id, local); close(); toast('E2EE 已启用','请把恢复密钥保存到安全位置'); resolve(local); } catch(err){ toast('初始化失败', err.message||'未知错误'); } } }
+        ]
+      });
+    });
+  }
+
+  async function openRestoreE2EE(user){
+    const recovery = await api('/api/e2ee/recovery', { method:'GET', headers:{} });
+    return new Promise((resolve, reject) => {
+      const codeId=uid('restoreCode'), deviceNameId=uid('restoreDeviceName');
+      openModal({
+        title:'恢复端到端加密身份',
+        body: () => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><div class="muted">这个浏览器还没有你的私钥。请输入初始化时保存的恢复密钥，把同一把私钥恢复到当前设备。</div><label>新设备名</label><input id="${deviceNameId}" value="Firefox Web · ${new Date().toLocaleDateString('zh-CN')}" /><label>恢复密钥</label><textarea id="${codeId}" rows="3" placeholder="例如 XXXX-XXXX-XXXX-XXXX"></textarea></div>`; return wrap; },
+        actions:[
+          { label:'取消', onClick: close => { close(); reject(new Error('用户取消恢复')); } },
+          { label:'恢复并登录', primary:true, onClick: async close => { try { const code = $('#'+codeId).value.trim(); if(!code) throw new Error('恢复密钥不能为空'); const deviceName=$('#'+deviceNameId).value.trim() || 'Firefox Web'; const restored = await cryptoBox.restoreIdentity(recovery.recoveryEnvelope, code); const local={ userId:user.id, deviceId:uid('device'), deviceName, publicKeyJwk:restored.publicKeyJwk, privateKeyJwk:restored.privateKeyJwk, recoveryEnvelope:recovery.recoveryEnvelope }; vaultStore.set(user.id, local); await api('/api/e2ee/devices/touch', { method:'POST', body:JSON.stringify({ deviceId:local.deviceId, deviceName:local.deviceName })}); close(); toast('恢复成功','当前设备已经能解密你的历史消息'); resolve(local); } catch(err){ toast('恢复失败', err.message||'恢复密钥不正确'); } } }
+        ]
+      });
+    });
+  }
+
+  async function bootstrapAfterAuth(){
+    await Promise.all([loadContacts(true), loadDrive(), loadPlugins(), loadTasks()]);
+    const user = store.get().auth.user; if (user && user.role === 'admin') await loadAdmin();
+  }
+
+  async function login(username, password){
+    const res = await api('/api/auth/login', { method:'POST', body:JSON.stringify({ username, password }) });
+    authStore.setToken(res.token); store.set(s=>{ s.auth.token = res.token; s.auth.user = res.user; }); await ensureE2EEReady();
+  }
+  async function logout(){ try{ await api('/api/auth/logout',{ method:'POST', body:'{}' }); }catch{} authStore.clear(); const u=store.get().auth.user; if(u){ /* keep vault for demo */ } store.set(s=>{ s.auth={ user:null, token:'', e2eeReady:false }; s.e2ee={ publicKeys:{}, localIdentity:null, devices:[] }; s.chat={ sessions:[], activeSessionId:'', messagesBySessionId:{}, announcementsBySessionId:{}, localPreviewBySessionId:{}, cursors:{}, drafts:{} }; s.drive.items=[]; s.admin={status:null,settings:{}}; s.plugins.items=[]; s.tasks=[]; }); renderAll(); }
+
+  async function loadContacts(resetCursor){
+    const res = await api('/chat/api/contacts', { method:'GET', headers:{} });
+    store.set(s => { s.chat.sessions = (res.sessions||[]).map(x => Object.assign({}, x, { readyCount:(x.members||[]).filter(m=>m.hasIdentity).length, localPreview:s.chat.localPreviewBySessionId[x.id]||'' })); if(!s.chat.activeSessionId && s.chat.sessions[0]) s.chat.activeSessionId=s.chat.sessions[0].id; if(resetCursor){ (res.sessions||[]).forEach(ss => { s.chat.cursors[ss.id]=0; }); } });
+    if (store.get().chat.activeSessionId) await syncMessages(store.get().chat.activeSessionId, true);
+  }
+
+  async function syncMessages(sessionId, reset=false){
+    const cursor = reset ? 0 : (store.get().chat.cursors[sessionId] || 0);
+    const res = await api('/chat/api/load?sessionId=' + encodeURIComponent(sessionId) + '&cursor=' + encodeURIComponent(String(cursor)), { method:'GET', headers:{} });
+    const user = store.get().auth.user; const identity = store.get().e2ee.localIdentity; if (!identity || !user) return;
+    store.set(s => { s.e2ee.publicKeys = Object.assign({}, s.e2ee.publicKeys, res.publicKeys||{}); });
+    const prev = reset ? [] : (store.get().chat.messagesBySessionId[sessionId] || []).slice();
+    const decrypted = [];
+    for (const row of (res.messages||[])) {
+      try {
+        const payload = await cryptoBox.decryptForUser(row.sealed, identity.privateKeyJwk, user.id);
+        if (payload.kind === 'vote') decrypted.push({ id:row.id, type:'vote', author:row.senderUserId===user.id?'我':row.senderName, createdAtLabel:(row.createdAt||'').replace('T',' ').slice(5,16), title:payload.title, description:payload.description||'', options:payload.options||[] });
+        else decrypted.push({ id:row.id, type:'text', author:row.senderUserId===user.id?'我':row.senderName, createdAtLabel:(row.createdAt||'').replace('T',' ').slice(5,16), text:payload.text||'' });
+      } catch { decrypted.push({ id:row.id, type:'locked', author:row.senderUserId===user.id?'我':row.senderName, createdAtLabel:(row.createdAt||'').replace('T',' ').slice(5,16), text:'当前设备无法解密这条消息。' }); }
+    }
+    let announcement = '';
+    if (res.announcement) {
+      try { const payload = await cryptoBox.decryptForUser(res.announcement, identity.privateKeyJwk, user.id); announcement = payload.text || ''; } catch { announcement = '当前设备无法解密公告'; }
+    }
+    store.set(s => {
+      const merged = reset ? decrypted : prev.concat(decrypted);
+      s.chat.messagesBySessionId[sessionId] = merged;
+      s.chat.announcementsBySessionId[sessionId] = announcement;
+      s.chat.cursors[sessionId] = res.sync && typeof res.sync.cursor === 'number' ? res.sync.cursor : cursor;
+      const last = merged[merged.length-1];
+      const preview = last ? (last.type === 'vote' ? '[投票] ' + last.title : last.text) : '';
+      s.chat.localPreviewBySessionId[sessionId] = preview;
+      const sess = s.chat.sessions.find(x => x.id === sessionId); if (sess) sess.localPreview = preview;
+    });
+  }
+
+  async function sendText(text){
+    const state=store.get(), session = state.chat.sessions.find(x=>x.id===state.chat.activeSessionId); if(!session) return;
+    const publicKeys={}; (session.members||[]).forEach(m => { if(state.e2ee.publicKeys[m.id]) publicKeys[m.id]=state.e2ee.publicKeys[m.id]; });
+    if (!publicKeys[state.auth.user.id]) throw new Error('当前账号未就绪，缺少自己的公钥');
+    const sealed = await cryptoBox.encryptForRecipients({ kind:'text', text }, publicKeys);
+    await api('/chat/api/send', { method:'POST', body:JSON.stringify({ sessionId:session.id, senderDeviceId:state.e2ee.localIdentity.deviceId, messageKind:'text', idempotencyKey:uid('idem'), sealed }) });
+    store.set(s=>{ s.chat.drafts[session.id] = ''; });
+    await syncMessages(session.id, false);
+  }
+
+  async function sendVote(title, description, options){
+    const state=store.get(), session = state.chat.sessions.find(x=>x.id===state.chat.activeSessionId); if(!session) return;
+    const publicKeys={}; (session.members||[]).forEach(m => { if(state.e2ee.publicKeys[m.id]) publicKeys[m.id]=state.e2ee.publicKeys[m.id]; });
+    const sealed = await cryptoBox.encryptForRecipients({ kind:'vote', title, description, options: options.map(t => ({ id:uid('opt'), text:t, count:0, selected:false })) }, publicKeys);
+    await api('/chat/api/send', { method:'POST', body:JSON.stringify({ sessionId:session.id, senderDeviceId:state.e2ee.localIdentity.deviceId, messageKind:'vote', idempotencyKey:uid('idem'), sealed }) });
+    await syncMessages(session.id, false);
+  }
+
+  async function saveAnnouncement(text){
+    const state=store.get(), session = state.chat.sessions.find(x=>x.id===state.chat.activeSessionId); if(!session) return;
+    const publicKeys={}; (session.members||[]).forEach(m => { if(state.e2ee.publicKeys[m.id]) publicKeys[m.id]=state.e2ee.publicKeys[m.id]; });
+    const sealed = await cryptoBox.encryptForRecipients({ kind:'announcement', text }, publicKeys);
+    await api('/chat/api/set_announcement', { method:'POST', body:JSON.stringify({ sessionId:session.id, sealed }) });
+    await syncMessages(session.id, true);
+  }
+
+  async function loadDrive(){ try { const state=store.get(); const res=await api('/drive/api/list?bucket=' + encodeURIComponent(state.drive.bucket) + '&path=' + encodeURIComponent(state.drive.path), { method:'GET', headers:{} }); store.set(s => { s.drive.items = res.items||[]; }); } catch(e){} }
+  async function loadPlugins(){ try { const res=await api('/api/plugins', { method:'GET', headers:{} }); store.set(s => { s.plugins.items = res.items||[]; }); } catch(e){} }
+  async function loadTasks(){ try { const res=await api('/api/tasks', { method:'GET', headers:{} }); store.set(s => { s.tasks = res.items||[]; }); } catch(e){} }
+  async function loadAdmin(){ try { const [st, se] = await Promise.all([api('/admin/api/service/status',{method:'GET',headers:{}}), api('/admin/api/settings/get',{method:'GET',headers:{}})]); store.set(s => { s.admin.status = st; s.admin.settings = se.settings || {}; }); } catch(e){} }
+
+  function renderTop(){ const st=store.get(); $('#statusBadge').textContent = st.auth.user ? (st.auth.e2eeReady ? '端到端已启用' : '已登录，待恢复密钥') : '未登录'; $('#userBadge').textContent = st.auth.user ? (st.auth.user.name + ' / ' + st.auth.user.role) : '匿名'; $('#loginBtn').textContent = st.auth.user ? '退出' : '登录'; }
+
+  function renderHome(){ const root=$('[data-panel="home"]'); root.innerHTML=`<div class="home"><h1 style="margin:0 0 8px">Checkin 单文件 E2EE 测试版</h1><p class="muted" style="margin:0 0 20px">后端可以直接放到 Cloudflare Workers 测试。聊天消息、投票和公告都在浏览器本地加密后再发送；换设备通过恢复密钥恢复同一把私钥。</p><div class="grid"><div class="entry" data-jump="chat"><h3 style="margin:0 0 8px">聊天</h3><p class="muted" style="margin:0">支持文本、投票、公告，前端本地加解密。</p></div><div class="entry" data-jump="drive"><h3 style="margin:0 0 8px">网盘</h3><p class="muted" style="margin:0">保留演示用网盘能力，不影响 E2EE 聊天链路。</p></div><div class="entry" data-jump="admin"><h3 style="margin:0 0 8px">后台</h3><p class="muted" style="margin:0">后台只能看到聊天元数据和密文统计，看不到聊天明文。</p></div></div><div class="card" style="margin-top:20px"><div class="row"><strong>测试账号</strong></div><div class="muted" style="margin-top:8px">alice / alice123，bob / bob123，管理员：admin / admin123</div><div class="muted">首次登录会提示你初始化或恢复 E2EE 身份。</div></div></div>`; root.onclick = e => { const x=e.target.closest('[data-jump]'); if(x) router.go(x.dataset.jump); } }
+
+  function renderChat(){ const st=store.get(); const root=$('[data-panel="chat"]'); const sessions=st.chat.sessions; const active=sessions.find(x=>x.id===st.chat.activeSessionId) || sessions[0] || null; const msgs=active ? (st.chat.messagesBySessionId[active.id]||[]) : []; const announce=active ? (st.chat.announcementsBySessionId[active.id]||'') : ''; root.innerHTML=`<div class="split"><aside class="sidebar"><div class="hd"><strong>会话</strong><span class="grow"></span><span class="badge">${sessions.length}</span></div><div class="bd">${sessions.map(s=>`<div class="session ${active&&active.id===s.id?'active':''}" data-session="${s.id}"><span class="badge">${s.online?'在线':'离线'}</span><div class="meta"><div class="name">${html(s.name)}</div><div class="sub">${html(s.localPreview || (s.readyCount < (s.members||[]).length ? '部分成员尚未初始化 E2EE' : '仅同步密文，由本地解密'))}</div></div><span class="muted">›</span></div>`).join('')}</div></aside><section class="content"><div class="hd"><strong>${html(active?active.name:'聊天')}</strong><span class="grow"></span><button class="btn" id="announcementBtn">编辑公告</button></div>${announce?`<div class="announce"><span class="badge">公告</span><div>${html(announce)}</div></div>`:''}<div class="messages" id="messageList">${msgs.map(m => m.type==='vote' ? `<div class="msg ${m.author==='我'?'self':''}"><div class="meta2">${html(m.author)} · ${html(m.createdAtLabel||'')}</div><div class="bubble"><div class="row" style="margin-bottom:8px"><span class="badge">投票</span><strong>${html(m.title)}</strong></div><div class="muted">${html(m.description||'')}</div><div class="list" style="margin-top:10px">${(m.options||[]).map(op => `<div class="card" style="padding:10px 12px"><div class="row"><span>${html(op.text)}</span><span class="grow"></span><strong>${op.count||0}</strong></div></div>`).join('')}</div></div></div>` : `<div class="msg ${m.author==='我'?'self':''}"><div class="meta2">${html(m.author)} · ${html(m.createdAtLabel||'')}</div><div class="bubble">${html(m.text||'')}</div></div>`).join('')}</div><div class="composerWrap"><div class="toolbar"><button class="btn" id="tplBtn">插入模板</button><button class="btn" id="voteBtn">发起投票</button><button class="btn" id="imgBtn">图片</button><button class="btn" id="fileBtn">文件</button><button class="btn" id="wbBtn">写字板</button></div><div class="cands">${['收到','好的','我这边已本地加密','稍后我同步','恢复密钥已保存','请先初始化 E2EE'].map(x=>`<button class="cand" data-cand="${html(x)}">${html(x)}</button>`).join('')}</div><div class="composer"><textarea id="draftInput" rows="4" placeholder="输入消息，Shift+Enter 换行，Enter 发送">${html(active ? (st.chat.drafts[active.id]||'') : '')}</textarea><button class="btn pri" id="sendBtn">发送</button></div></div></section></div>`;
+    root.onclick = async e => {
+      const sessionEl = e.target.closest('[data-session]'); if (sessionEl) { store.set(s => { s.chat.activeSessionId = sessionEl.dataset.session; }); await syncMessages(sessionEl.dataset.session, true); return; }
+      const cand = e.target.closest('[data-cand]'); if (cand && active) { store.set(s => { s.chat.drafts[active.id] = cand.dataset.cand; }); renderChat(); $('#draftInput').focus(); return; }
+      if (e.target.id === 'tplBtn' && active) { store.set(s => { s.chat.drafts[active.id] = ((s.chat.drafts[active.id]||'').trim() ? (s.chat.drafts[active.id]||'').trim()+'\n' : '') + '这条消息已在 Firefox 本地加密后发送。'; }); renderChat(); return; }
+      if (e.target.id === 'voteBtn') return openVote();
+      if (e.target.id === 'announcementBtn') return openAnnouncement();
+      if (e.target.id === 'imgBtn') return toast('图片发送','这里暂时保留占位。要做到真正 E2EE，附件也需要在前端先加密后再上传。');
+      if (e.target.id === 'fileBtn') return toast('文件发送','这里暂时保留占位。要做到真正 E2EE，附件也需要在前端先加密后再上传。');
+      if (e.target.id === 'wbBtn') return toast('写字板','写字板快照也应该像文本消息一样，本地加密后再上送。');
+    };
+    setTimeout(()=>{ const box=$('#messageList'); if(box) box.scrollTop=box.scrollHeight; const input=$('#draftInput'); if(input){ input.oninput=()=>{ if(active) store.state.chat.drafts[active.id]=input.value; }; input.onkeydown=ev=>{ if(ev.isComposing) return; if(ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); $('#sendBtn').click(); } }; } const send=$('#sendBtn'); if(send) send.onclick=async ()=>{ try{ const text=(input&&input.value||'').trim(); if(!text) return; await sendText(text); renderChat(); } catch(err){ toast('发送失败', err.message||'未知错误'); } }; },0);
+  }
+
+  function renderDrive(){ const st=store.get(); const root=$('[data-panel="drive"]'); root.innerHTML=`<div class="split"><aside class="sidebar"><div class="hd"><strong>目录</strong></div><div class="bd list"><div class="card" data-bucket="mine">我的文件</div><div class="card" data-bucket="team">团队共享</div><div class="card" data-bucket="recent">最近访问</div></div></aside><section class="content"><div class="hd"><strong>网盘</strong><span class="grow"></span><button class="btn" id="uploadBtn">上传</button><button class="btn pri" id="folderBtn">新建目录</button></div><div class="bd"><div class="card" style="margin-bottom:12px"><div class="row"><strong>路径</strong><span class="grow"></span><span class="muted">${html(st.drive.bucket)} / ${html(st.drive.path)}</span></div></div><div class="list">${(st.drive.items||[]).map(item=>`<div class="card"><div class="row"><strong>${html(item.type==='folder'?'📁 ':'📄 ')}${html(item.name)}</strong><span class="grow"></span><span class="muted">${html(item.size||'—')}</span></div><div class="muted" style="margin-top:6px">更新时间：${html((item.updatedAt||'').replace('T',' ').slice(0,16))}</div></div>`).join('')}</div></div></section></div>`;
+    root.onclick = async e => {
+      const bucket = e.target.closest('[data-bucket]'); if(bucket){ store.set(s => { s.drive.bucket = bucket.dataset.bucket; }); await loadDrive(); return; }
+      if(e.target.id==='folderBtn'){ const name=prompt('请输入目录名','新建目录'); if(!name) return; try{ await api('/drive/api/new',{ method:'POST', body:JSON.stringify({ bucket:store.get().drive.bucket, path:store.get().drive.path, name }) }); await loadDrive(); toast('目录已创建', name); } catch(err){ toast('创建失败', err.message||'未知错误'); } }
+      if(e.target.id==='uploadBtn'){ const fileName=prompt('模拟上传文件名','demo.txt'); if(!fileName) return; try{ await api('/drive/api/upload',{ method:'POST', body:JSON.stringify({ bucket:store.get().drive.bucket, path:store.get().drive.path, fileName, size:128*1024 }) }); await loadDrive(); await loadTasks(); toast('已创建上传任务', fileName); } catch(err){ toast('上传失败', err.message||'未知错误'); } }
+    };
+  }
+
+  function renderAdmin(){ const st=store.get(); const root=$('[data-panel="admin"]'); const denied = st.auth.user && st.auth.user.role !== 'admin'; root.innerHTML = denied ? `<div class="card"><strong>仅管理员可见</strong><div class="muted" style="margin-top:8px">请使用 admin / admin123 登录后测试后台能力。</div></div>` : `<div class="split"><aside class="sidebar"><div class="hd"><strong>管理</strong></div><div class="bd list"><div class="card">服务状态</div><div class="card">系统设置</div><div class="card">密文备份概览</div></div></aside><section class="content"><div class="hd"><strong>后台面板</strong><span class="grow"></span><button class="btn" id="backupBtn">查看备份</button><button class="btn pri" id="saveSettingsBtn">保存设置</button></div><div class="bd"><div class="list"><div class="card"><div class="row"><strong>服务状态</strong><span class="grow"></span><span class="badge">${html((st.admin.status&&st.admin.status.runtime)||'workers')}</span></div><div class="muted" style="margin-top:8px">存储：${html((st.admin.status&&st.admin.status.storage)||'memory-demo')} · 会话数：${html(String((st.admin.status&&st.admin.status.chatSessionCount)||0))} · E2EE 身份：${html(String((st.admin.status&&st.admin.status.e2eeIdentityCount)||0))}</div></div><div class="card"><div class="field"><label>全体通知</label><textarea id="noticeInput" rows="4">${html((st.admin.settings&&st.admin.settings.peopleNotice)||'')}</textarea></div><div class="field"><label>应用标题</label><input id="titleInput" value="${html((st.admin.settings&&st.admin.settings.appTitle)||'Checkin E2EE')}" /></div></div></div></div></section></div>`;
+    if (denied) return;
+    root.onclick = async e => {
+      if(e.target.id==='saveSettingsBtn'){ try{ await api('/admin/api/settings/update',{ method:'POST', body:JSON.stringify({ peopleNotice:$('#noticeInput').value.trim(), appTitle:$('#titleInput').value.trim() }) }); await loadAdmin(); toast('设置已保存','后台设置已经同步'); } catch(err){ toast('保存失败', err.message||'未知错误'); } }
+      if(e.target.id==='backupBtn'){ try{ const backup = await api('/admin/api/service/backup',{ method:'GET', headers:{} }); openModal({ title:'备份预览（仅元数据，不含聊天明文）', body: () => { const pre=document.createElement('pre'); pre.className='json'; pre.textContent=JSON.stringify(backup, null, 2); return pre; }, actions:[{label:'关闭', onClick:c=>c()}] }); } catch(err){ toast('读取失败', err.message||'未知错误'); } }
+    };
+  }
+
+  function renderAll(){ renderTop(); renderHome(); renderChat(); renderDrive(); renderAdmin(); }
+
+  function openLogin(){
+    const nameId=uid('name'), pwdId=uid('pwd');
+    openModal({ title:'登录', body:() => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><label>用户名</label><input id="${nameId}" value="alice"></div><div class="field"><label>密码</label><input id="${pwdId}" type="password" value="alice123"></div><div class="muted">演示账号：alice / alice123，bob / bob123，管理员：admin / admin123。第一次登录会提示你初始化或恢复 E2EE 身份。</div>`; return wrap; }, actions:[ {label:'取消', onClick:c=>c()}, {label:'登录', primary:true, onClick: async close => { try{ await login($('#'+nameId).value.trim(), $('#'+pwdId).value); close(); toast('登录成功', $('#'+nameId).value.trim()); } catch(err){ toast('登录失败', err.message||'未知错误'); } }} ] });
+  }
+
+  async function openDevices(){
+    if(!store.get().auth.user){ toast('请先登录','登录后才能管理设备'); return; }
+    await ensureE2EEReady();
+    const res = await api('/api/e2ee/devices', { method:'GET', headers:{} });
+    store.set(s => { s.e2ee.devices = res.items||[]; });
+    const current = currentDeviceId();
+    openModal({ title:'设备与恢复', body:() => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><div class="muted">当前方案针对“频繁换设备”做了恢复密钥：你可以在新设备上输入恢复密钥，恢复同一把私钥，从而继续解密历史消息。</div><div class="row"><button class="btn pri" id="rotateRecoveryBtn">重新生成恢复密钥</button><span class="muted">重新生成后，请用新的恢复密钥替换旧记录。</span></div></div><div class="list">${(res.items||[]).map(d => `<div class="card"><div class="row"><strong>${html(d.deviceName)}</strong><span class="badge">${d.deviceId===current?'当前设备':html(d.status)}</span><span class="grow"></span>${d.deviceId===current?'':`<button class="btn" data-revoke="${html(d.deviceId)}">停用</button>`}</div><div class="muted" style="margin-top:8px">创建：${html(d.createdAt||'')}</div><div class="muted">最近在线：${html(d.lastSeenAt||'')}</div></div>`).join('')}</div>`; return wrap; }, actions:[{label:'关闭', onClick:c=>c()}] });
+    const root=$('#modalRoot'); root.onclick = async e => {
+      if(e.target===root || e.target.hasAttribute('data-close')) return;
+      const revoke = e.target.closest('[data-revoke]');
+      if(revoke){ try{ await api('/api/e2ee/devices/' + encodeURIComponent(revoke.dataset.revoke), { method:'DELETE', headers:{} }); toast('设备已停用', revoke.dataset.revoke); $('.btn[data-close]', root)?.click(); setTimeout(openDevices, 50); } catch(err){ toast('停用失败', err.message||'未知错误'); } }
+      if(e.target.id==='rotateRecoveryBtn'){ try{ const local = getLocalIdentity(); if(!local) throw new Error('当前没有可用身份'); const code=cryptoBox.recoveryCode(); const recoveryEnvelope = await cryptoBox.createRecoveryEnvelope(local.privateKeyJwk, local.publicKeyJwk, code); await api('/api/e2ee/recovery', { method:'POST', body:JSON.stringify({ recoveryEnvelope }) }); vaultStore.set(store.get().auth.user.id, Object.assign({}, local, { recoveryEnvelope })); openModal({ title:'新的恢复密钥', body:() => { const ta=document.createElement('textarea'); ta.rows=3; ta.readOnly=true; ta.value=code; return ta; }, actions:[{label:'关闭', onClick:c=>c()}] }); toast('恢复密钥已更新','请保存新的恢复密钥'); } catch(err){ toast('更新失败', err.message||'未知错误'); } }
+    };
+  }
+
+  async function openPlugins(){ if(!store.get().auth.user){ toast('请先登录','登录后才能查看插件'); return; } await loadPlugins(); const items=store.get().plugins.items; openModal({ title:'插件管理', body:() => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="list">${items.map(p => `<div class="card"><div class="row"><strong>${html(p.name)}</strong><span class="badge">v${html(p.version)}</span><span class="grow"></span><button class="btn" data-detail="${p.id}">详情</button><button class="btn ${p.enabled?'':'pri'}" data-toggle="${p.id}">${p.enabled?'停用':'启用'}</button></div><div class="muted" style="margin-top:8px">${html(p.description||'')} · 作者 ${html(p.author||'')}</div></div>`).join('')}</div>`; return wrap; }, actions:[{label:'关闭', onClick:c=>c()}] }); const root=$('#modalRoot'); root.onclick = async e => { if(e.target===root || e.target.hasAttribute('data-close')) return; const t=e.target.closest('[data-toggle]'); const d=e.target.closest('[data-detail]'); if(t){ try{ const id=t.dataset.toggle; const item=items.find(x=>x.id===id); await api('/api/plugins/' + encodeURIComponent(id) + '/' + (item.enabled ? 'deactivate' : 'activate'), { method:'POST', body:'{}' }); $('.btn[data-close]', root)?.click(); setTimeout(openPlugins, 50); } catch(err){ toast('操作失败', err.message||'未知错误'); } } if(d){ try{ const detail=await api('/api/plugins/' + encodeURIComponent(d.dataset.detail), { method:'GET', headers:{} }); openModal({ title:'插件详情', body:`<div class="field"><strong>${html(detail.item.name)} · v${html(detail.item.version)}</strong><div>${html(detail.item.description||'')}</div><div class="muted">作者：${html(detail.item.author||'')} · 入口：${html(detail.item.entry||'index.js')}</div></div>`, actions:[{label:'关闭', onClick:c=>c()}] }); } catch(err){ toast('读取详情失败', err.message||'未知错误'); } } } }
+
+  function openVote(){ const titleId=uid('title'), descId=uid('desc'), a=uid('a'), b=uid('b'), c=uid('c'); openModal({ title:'发起投票', body:() => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><label>标题</label><input id="${titleId}"></div><div class="field"><label>描述</label><textarea id="${descId}" rows="3"></textarea></div><div class="field"><label>选项 1</label><input id="${a}"></div><div class="field"><label>选项 2</label><input id="${b}"></div><div class="field"><label>选项 3</label><input id="${c}"></div>`; return wrap; }, actions:[ {label:'取消', onClick:c=>c()}, {label:'创建', primary:true, onClick: async close => { const title=$('#'+titleId).value.trim(); const description=$('#'+descId).value.trim(); const options=[$('#'+a).value.trim(), $('#'+b).value.trim(), $('#'+c).value.trim()].filter(Boolean); if(!title || options.length<2){ toast('创建失败','标题不能为空，且至少需要 2 个选项'); return; } try{ await sendVote(title, description, options); close(); toast('投票已创建', title); } catch(err){ toast('创建失败', err.message||'未知错误'); } } } ] }); }
+  function openAnnouncement(){ const active = store.get().chat.activeSessionId; const current=(store.get().chat.announcementsBySessionId[active]||''); const id=uid('ann'); openModal({ title:'编辑公告', body:() => { const wrap=document.createElement('div'); wrap.innerHTML=`<div class="field"><label>公告内容</label><textarea id="${id}" rows="8">${html(current)}</textarea><div class="muted">公告会像普通消息一样在浏览器本地加密，再以密文发到后端。</div></div>`; return wrap; }, actions:[ {label:'取消', onClick:c=>c()}, {label:'保存', primary:true, onClick: async close => { try{ await saveAnnouncement($('#'+id).value.trim()); close(); toast('公告已更新', $('#'+id).value.trim() || '已清空'); } catch(err){ toast('保存失败', err.message||'未知错误'); } } } ] }); }
+  async function openTasks(){ await loadTasks(); const items=store.get().tasks || []; openModal({ title:'后台任务', body:() => { const wrap=document.createElement('div'); wrap.className='list'; items.forEach(t => { const card=document.createElement('div'); card.className='card'; card.innerHTML=`<div class="row"><strong>${html(t.name)}</strong><span class="grow"></span><span class="muted">${html(t.status)}</span></div><div style="margin-top:10px;height:8px;border-radius:999px;background:#edf2f7;overflow:hidden"><div style="height:100%;background:#2f6ea7;width:${Number(t.progress||0)}%"></div></div>`; wrap.appendChild(card); }); return wrap; }, actions:[{label:'关闭', onClick:c=>c()}] }); }
+
+  let poll=null;
+  function startPolling(){ if(poll) clearInterval(poll); poll=setInterval(async()=>{ const st=store.get(); if(st.auth.user && st.auth.e2eeReady && st.chat.activeSessionId){ try{ await syncMessages(st.chat.activeSessionId, false); } catch {} } }, 5000); }
+
+  $('#loginBtn').onclick = async () => { if(store.get().auth.user) { await logout(); toast('已退出','登录态已清除'); } else openLogin(); };
+  $('#devicesBtn').onclick = openDevices;
+  $('#pluginsBtn').onclick = openPlugins;
+  $('#tasksBtn').onclick = openTasks;
+  router.init();
+  hydrateAuth().then(() => { renderAll(); startPolling(); if(store.get().auth.user && store.get().auth.e2eeReady && store.get().chat.activeSessionId){ syncMessages(store.get().chat.activeSessionId, true).catch(()=>{}); } toast('E2EE 前端已加载','聊天明文只在浏览器内出现；换设备请使用恢复密钥。'); }).catch(err => { renderAll(); toast('初始化失败', err.message||'未知错误'); });
+})();
+</script>
+</body>
+</html>
